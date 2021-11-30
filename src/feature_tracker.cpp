@@ -16,7 +16,7 @@ FeatureTracker::FeatureTracker( void ){}
 void FeatureTracker::init( std::vector<int> &feature_status, int number_of_features ){
 
     if (feature_status.empty()) {
-		feature_status.resize(number_of_features, 2); // Request = 2 features = 30 
+		feature_status.resize(number_of_features, 2); // Request = 2
 	}
 
     this->prev_status.resize(number_of_features, 0);
@@ -26,7 +26,7 @@ void FeatureTracker::init( std::vector<int> &feature_status, int number_of_featu
 // corners (features, z_all_r) and status are output variables
 void FeatureTracker::track_features(const cv::Mat &img, std::vector<cv::Point2f> &features, std::vector<int> &feature_status ) {
     if (!img.data)
-        throw "Left image is invalid";
+        throw "Image is invalid";
 
     std::vector<unsigned char> status; // Vector to hold status of each tracked feature from calcOpticalFlowPyrLK
     std::vector<cv::Point2f> corners;  // Vector to hold new corner positions tracked by calcOpticalFlowPyrLK
@@ -85,7 +85,7 @@ void FeatureTracker::track_features(const cv::Mat &img, std::vector<cv::Point2f>
 
 void FeatureTracker::update_feature_status( std::vector<int> &feature_status ){
 
-        //update feature status
+    //update feature status
 	for (int i = 0; i < feature_status.size(); i++) {
 		//new and now active
 		if (feature_status[i] == 2) {
@@ -97,7 +97,6 @@ void FeatureTracker::update_feature_status( std::vector<int> &feature_status ){
 			feature_status[i] = 2;
 		}
 	}
-
 }
 
 int FeatureTracker::find_valid_keypoints( std::vector<cv::KeyPoint> &keypoints, std::vector<cv::KeyPoint> &good, std::vector<cv::KeyPoint> * unused, unsigned int distance, int max_good ){
