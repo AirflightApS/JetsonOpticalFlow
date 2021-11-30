@@ -37,7 +37,7 @@ public:
      * @param flow_y 
      * @return int 
      */
-    int compute_flow( uint8_t *img_current, const uint32_t &img_time_us, int &dt_us, float &flow_x, float &flow_y );
+    int compute_flow( uint8_t *img_current, const uint32_t img_time_us, int &dt_us, float &flow_x, float &flow_y );
 
 
     inline void set_image_width(int value) { image_width = value; };

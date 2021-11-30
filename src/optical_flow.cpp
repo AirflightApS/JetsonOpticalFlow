@@ -19,7 +19,7 @@ void OpticalFlow::init( float f_length_x, float f_length_y, int ouput_rate, int 
     tracker->init( status, num_features );
 }
 
-int OpticalFlow::compute_flow( uint8_t *img_current, const uint32_t &img_time_us, int &dt_us, float &flow_x, float &flow_y ){
+int OpticalFlow::compute_flow( uint8_t *img_current, const uint32_t img_time_us, int &dt_us, float &flow_x, float &flow_y ){
 
     // Prepare static variable to hold image data
     static cv::Mat image = cv::Mat(image_height, image_width, CV_8UC1);
@@ -111,6 +111,14 @@ int OpticalFlow::compute_flow( uint8_t *img_current, const uint32_t &img_time_us
     
     // Compute flow quality
     flow_quality = round(255.0 * confidense_count / status.size());
+
+    // Compute mean flow
+    flow_x = xsum_confidense / confidense_count;
+    flow_y = ysum_confidense / confidense_count; 
+
+    // Scale the flow from px/s to 1/s
+    flow_x = atan2(flow_x, focal_length_x); //convert pixel flow to angular flow
+	flow_y = atan2(flow_y, focal_length_y); //convert pixel flow to angular flow
 
 }
 
