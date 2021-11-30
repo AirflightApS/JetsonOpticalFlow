@@ -10,6 +10,7 @@
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-I", "${fileDirname}/src",
+                "-I", "${fileDirname}/external/mavlink/c_library_v2",
                 "-I/usr/local/include/opencv4",
                 "-I/usr/local/include", 
                 "-L/usr/local/lib",
