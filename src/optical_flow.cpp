@@ -25,12 +25,12 @@ void OpticalFlow::init( int img_width, int img_height, float f_x, float f_y, int
 int OpticalFlow::compute_flow( cv::Mat image, const uint32_t img_time_us, float &flow_x, float &flow_y, int &dt_us ){
 
     // Variables
-    float pixel_mean_x, pixel_mean_y            = 0.0;
-    float pixel_variance_x, pixel_variance_y    = 0.0;
-    float pixel_stddev_x, pixel_stddev_y        = 0.0;
-    float xsum, ysum = 0.0;
+    float pixel_mean_x = 0.0, pixel_mean_y            = 0.0;
+    float pixel_variance_x = 0.0, pixel_variance_y    = 0.0;
+    float pixel_stddev_x = 0.0, pixel_stddev_y        = 0.0;
+    float xsum = 0.0, ysum = 0.0;
     int feature_count = 0;
-    float xsum_confidense, ysum_confidense = 0.0;   // Sum of the features inside the confidense interval
+    float xsum_confidense = 0.0, ysum_confidense = 0.0;   // Sum of the features inside the confidense interval
     int confidense_count = 0;                       // Numbers of features inside the confidense interval
     int flow_quality = 0;
 
@@ -109,7 +109,8 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint32_t img_time_us, float 
         flow_x = atan2(flow_x, focal_length_x); //convert pixel flow to angular flow
         flow_y = atan2(flow_y, focal_length_y); //convert pixel flow to angular flow
     }else{
-        flow_x = 0; flow_y = 0;
+        flow_x = 0;
+        flow_y = 0;
     }
 
     // Compute flow quality
