@@ -48,6 +48,8 @@ public:
 
 private:
 
+    int rate_limit(int flow_quality, const uint32_t img_time_us, int *dt_us, float *flow_x, float *flow_y);
+
     // Configuration
 	int image_width;
 	int image_height;

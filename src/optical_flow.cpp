@@ -104,10 +104,6 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint32_t img_time_us, float 
     if( confidense_count ){
         flow_x = xsum_confidense / confidense_count;
         flow_y = ysum_confidense / confidense_count; 
-
-        // Scale the flow from px/s to 1/s
-        flow_x = atan2(flow_x, focal_length_x); //convert pixel flow to angular flow
-        flow_y = atan2(flow_y, focal_length_y); //convert pixel flow to angular flow
     }else{
         flow_x = 0;
         flow_y = 0;
@@ -116,7 +112,72 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint32_t img_time_us, float 
     // Compute flow quality
     flow_quality = round(255.0 * confidense_count / status_vector.size());
 
+    // Limit rate, by accumulating flow and taking the average quality. 
+    flow_quality = rate_limit( flow_quality, img_time_us, &dt_us, &flow_x, &flow_y );
+
+    // Scale the flow from px/s to 1/s
+    flow_x = atan2(flow_x, focal_length_x); //convert pixel flow to angular flow
+    flow_y = atan2(flow_y, focal_length_y); //convert pixel flow to angular flow
+
     return flow_quality;
 
 }
 
+
+
+int OpticalFlow::rate_limit(int flow_quality, const uint32_t image_time_us, int *dt_us, float *flow_x, float *flow_y)
+{
+
+	static uint32_t last_report = 0;
+    static float sum_flow_x = 0;
+    static float sum_flow_y = 0;
+    static float sum_flow_quality = 0;
+    static float valid_image_count = 0;
+
+    // If the output rate is not configured, don't limit the rate
+	if (output_rate <= 0) { 
+		*dt_us = image_time_us - last_report;
+		last_report = image_time_us;
+		return flow_quality;
+	}
+
+    // If the flow quality if higher than 0, add the current flow to the sum.
+	if (flow_quality > 0) {
+		sum_flow_x += *flow_x;
+		sum_flow_y += *flow_y;
+		sum_flow_quality += flow_quality;
+		valid_image_count++;
+	}
+
+	// limit rate according to parameter ouput_rate
+	if ((image_time_us - last_report) > (1.0e6f / output_rate)) {
+
+		int average_flow_quality = 0;
+
+		// Average the flow over the period since last update
+		if (valid_image_count > 0) {
+			average_flow_quality = std::floor(sum_flow_quality / valid_image_count);
+		}
+
+        // Set the output flow equal to the accumulated flow (in pixels)
+		*flow_x = sum_flow_x;
+		*flow_y = sum_flow_y;
+
+		// Reset variables
+		sum_flow_y = 0; sum_flow_x = 0; 
+        sum_flow_quality = 0;
+        valid_image_count = 0;
+
+        // Calculate delta time
+		*dt_us = image_time_us - last_report;
+		last_report = image_time_us;
+
+		return average_flow_quality;
+
+	} else {
+
+		return -1; // Signaling that it should not yet report the values
+
+	}
+
+}
