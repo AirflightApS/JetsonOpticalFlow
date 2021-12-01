@@ -5,7 +5,7 @@
 #include <iostream>
 
 #define CAMERA_ID_MAIN 0
-#define CAMERA_ORIENTATION_UP = 0
+#define CAMERA_ORIENTATION_UP 0
 
 class Camera
 {
@@ -15,8 +15,8 @@ public:
     
     bool init( int width, int height, int frame_rate, int orientation = CAMERA_ORIENTATION_UP );
     void stop( void );
-    bool read( void );
-    bool show( cv::Mat image, float scale = 1 );
+    bool read( uint32_t &sample_time );
+    bool show( cv::Mat image, int scale = 1 );
     
     // Variables
     int image_height;

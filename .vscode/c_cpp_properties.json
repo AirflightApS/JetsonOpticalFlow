@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "/usr/local/include/opencv4",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/external/mavlink/c_library_v2"
+                "${workspaceFolder}/external/mavlink/c_library_v2/common"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

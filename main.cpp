@@ -21,12 +21,12 @@ OpticalFlow flow;   // OpticalFlow object
  * https://mavlink.io/en/messages/common.html#OPTICAL_FLOW_RAD
  */
 mavlink_optical_flow_rad_t message; // Message struct for mavlink communication
-cv::Mat image = cv::Mat(CAMERA_WIDTH, CAMERA_HEIGHT, cv::CV_8UC1); // Allocation of space for gray-scale image
+cv::Mat image_8b = cv::Mat(CAMERA_WIDTH, CAMERA_HEIGHT, CV_8UC1); // Allocation of space for gray-scale image
 
 float flow_x = 0.0;
 float flow_y = 0.0;
 int dt_us = 0; // Time between optical flow computations in microseconds
-
+uint32_t img_time_us = 0;
 
 int main()
 {
@@ -43,18 +43,21 @@ int main()
     while(streaming){
 
         // Read newest image from camera
-        uint32_t img_time_us = cam.read();
+        if( cam.read( img_time_us ) ){
 
-        // Convert to gray-scale (needed for optical flow)
-        cv::cvtColor( cam.image , image, cv::COLOR_BGR2GRAY);
+            // Convert to gray-scale (needed for optical flow)
+            cv::cvtColor( cam.image , image_8b, cv::COLOR_BGR2GRAY);
 
-        // Compute flow from image, and save the values in flox_x and flow_y
-        flow.compute_flow( image, img_time_us, dt, flow_x, flow_y );
+            // Compute flow from image, and save the values in flox_x and flow_y
+            flow.compute_flow( image_8b, img_time_us, flow_x, flow_y, dt_us );
 
-        // Visualize the flow
-        if( !cam.show( image ) ){
-            streaming = false;
+            // Visualize the flow
+            if( !cam.show( image_8b, 2 ) ){
+                streaming = false;
+            }
+
         }
+
 
     }
 

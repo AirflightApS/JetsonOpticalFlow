@@ -13,8 +13,8 @@ void OpticalFlow::init( int img_width, int img_height, float f_x, float f_y, int
     focal_length_x = f_x;
     focal_length_y = f_y;
     output_rate = output_rate;
-    image_width = img_w;
-    image_height = img_h;
+    image_width = img_width;
+    image_height = img_height;
     num_features = num_feat;
     confidence_multiplier = conf_multi;
 
@@ -33,6 +33,7 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint32_t img_time_us, float 
     float xsum_confidense, ysum_confidense = 0.0;   // Sum of the features inside the confidense interval
     int confidense_count = 0;                       // Numbers of features inside the confidense interval
     int flow_quality = 0;
+
 
     // Track the current features in new frame
     tracker->track_features( image, features_current, status_vector );

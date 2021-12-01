@@ -51,7 +51,7 @@ void FeatureTracker::track_features(const cv::Mat &img, std::vector<cv::Point2f>
     if (!prev_img.empty()) {
         if (!prev_corners.empty()) {
 
-            cv::calcOpticalFlowPyrLK(prev_img, img, prev_corners, corners, status, errors, cv::Size(9, 9), 3);
+            cv::calcOpticalFlowPyrLK(prev_img, img, prev_corners, corners, status, errors, cv::Size(21, 21), 3);
             prev_corners = corners;
 
             for (size_t i = 0; i < prev_corners.size() && i < num_features; ++i) {

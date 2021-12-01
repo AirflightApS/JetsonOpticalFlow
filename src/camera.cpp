@@ -12,11 +12,15 @@ Camera::Camera( void ){}
 
 bool Camera::init( int width, int height, int frame_rate, int orientation )
 {
+
+    image_width = width;
+    image_height = height;
+
     std::string pipeline = gstreamer_pipeline( width, height, width, height, frame_rate, orientation);
 
-    camera.open( pipeline, cv::CAP_GSTREAMER );
+    capture.open( pipeline, cv::CAP_GSTREAMER );
 
-    if( camera.isOpened()) {
+    if( capture.isOpened()) {
         printf("Camera ready.");
 
         return true;
@@ -27,7 +31,7 @@ bool Camera::init( int width, int height, int frame_rate, int orientation )
 
 
 
-bool Camera::read( void )
+bool Camera::read( uint32_t &sample_time )
 {
     // Allocate Mat for processing the image.
     cv::Mat raw;
@@ -35,13 +39,16 @@ bool Camera::read( void )
     // Read the camera into the raw variable
     capture.read( raw );
 
-    if( !raw.empty() )
+    if( !raw.empty() ){
+        this->image = raw;
         return true;
+    }
+        
 
     return false;
 }
 
-bool Camera::show( cv::Mat data, float scale ){
+bool Camera::show( cv::Mat data, int scale ){
 
     static int frame_number = 0;
     cv::Mat temp = cv::Mat(image_height, image_width, CV_8UC1);
@@ -73,6 +80,6 @@ bool Camera::show( cv::Mat data, float scale ){
 
 void Camera::stop()
 {
-    camera.release();
+    capture.release();
     cv::destroyAllWindows();
 }

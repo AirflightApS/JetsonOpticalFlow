@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include "feature_tracker.h"
 
-#define DEFAULT_CONFIDENCE_MULTIPLIER 1.645f // 90% confidence interval
+#define DEFAULT_CONFIDENCE_MULTIPLIER 1.282f // 80% confidence interval
 
 class OpticalFlow
 {
