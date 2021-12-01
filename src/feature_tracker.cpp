@@ -1,7 +1,7 @@
 /**
  * feature_tracker.cpp
  *
- * Created on: September 17, 2020
+ * Created on: December 1, 2021
  * Author: SolidGeek
  */
 
@@ -16,10 +16,10 @@ FeatureTracker::FeatureTracker( void ){}
 void FeatureTracker::init( std::vector<int> &feature_status, int number_of_features ){
 
     if (feature_status.empty()) {
-		feature_status.resize(number_of_features, 2); // Request = 2
+		feature_status.resize( number_of_features, FEATURE_STATUS_REQUEST );
 	}
 
-    this->prev_status.resize(number_of_features, 0);
+    this->prev_status.resize( number_of_features, FEATURE_STATUS_INACTIVE );
 
 }
 
@@ -41,10 +41,10 @@ void FeatureTracker::track_features(const cv::Mat &img, std::vector<cv::Point2f>
 
     // NEED COMMENT
     for (size_t i = 0; i < feature_status.size() && i < num_features; ++i) {
-        if (feature_status[i] == 1) {
-            prev_status[i] = 1;
+        if (feature_status[i] == FEATURE_STATUS_ACTIVE) {
+            prev_status[i] = FEATURE_STATUS_ACTIVE;
         } else {
-            prev_status[i] = 0;  // if feature_status[i] == 0 feature is inactive, == 2 request new feature
+            prev_status[i] = FEATURE_STATUS_INACTIVE;  // if feature_status[i] == 0 feature is inactive, == 2 request new feature
         }
     }
 
@@ -57,20 +57,20 @@ void FeatureTracker::track_features(const cv::Mat &img, std::vector<cv::Point2f>
             for (size_t i = 0; i < prev_corners.size() && i < num_features; ++i) {
                 // Check if calcOpticalFlowPyrLK lost track of a feature.
                 if (!(prev_status[i] && status[i]))
-                    prev_status[i] = 0;
+                    prev_status[i] = FEATURE_STATUS_INACTIVE;
 
                 // If last corner was a active feature, check if it is still valid (within the frame)
                 if (prev_status[i] == 1) {
                     if (prev_corners[i].x < 0 || prev_corners[i].x > img.cols || prev_corners[i].y < 0 || prev_corners[i].y > img.rows ) {
-                        feature_status[i] = 0;
+                        feature_status[i] = FEATURE_STATUS_INACTIVE;
                     } else {
                         // Corner is still a feature, save it by setting feature_status[i] == 1 (active feature)
                         features[i] = prev_corners[i];
-                        feature_status[i] = 1;
+                        feature_status[i] = FEATURE_STATUS_ACTIVE;
                     }
                 } else {
-                    if (feature_status[i] == 1)  // be careful not to overwrite 2s in feature_status
-                        feature_status[i] = 0;
+                    if (feature_status[i] == 1)  // be careful not to overwrite feature requests in feature_status
+                        feature_status[i] = FEATURE_STATUS_INACTIVE;
                 }
             }
         }
@@ -88,13 +88,13 @@ void FeatureTracker::update_feature_status( std::vector<int> &feature_status ){
     //update feature status
 	for (int i = 0; i < feature_status.size(); i++) {
 		//new and now active
-		if (feature_status[i] == 2) {
-			feature_status[i] = 1;
+		if (feature_status[i] == FEATURE_STATUS_REQUEST) {
+			feature_status[i] = FEATURE_STATUS_ACTIVE;
 		}
 
 		//inactive
-		if (feature_status[i] == 0) {
-			feature_status[i] = 2;
+		if (feature_status[i] == FEATURE_STATUS_INACTIVE) {
+			feature_status[i] = FEATURE_STATUS_REQUEST;
 		}
 	}
 }
@@ -109,7 +109,7 @@ int FeatureTracker::find_valid_keypoints( std::vector<cv::KeyPoint> &keypoints, 
 
         bool far_enough = true;
         for (int j = 0; j < prev_corners.size(); j++) {
-            if (prev_status[j] == 0)
+            if (prev_status[j] == FEATURE_STATUS_INACTIVE)
                 continue;
             int existing_pt_x = prev_corners[j].x;
             int existing_pt_y = prev_corners[j].y;
@@ -151,7 +151,7 @@ void FeatureTracker::init_more_points(const cv::Mat &img, std::vector<cv::Point2
 
     // Count the features that need to be initialized
     for (int i = 0; i < feature_status.size(); i++) {
-        if (feature_status[i] == 2)  // 2 means new feature requested
+        if (feature_status[i] == FEATURE_STATUS_REQUEST )  // 2 means new feature requested
             targetNumPoints++;
     }
 
@@ -174,7 +174,7 @@ void FeatureTracker::init_more_points(const cv::Mat &img, std::vector<cv::Point2
 
     // Count the number of active features in each bin
     for (int i = 0; i < prev_corners.size(); i++) {
-        if (feature_status[i] == 1) {
+        if (feature_status[i] == FEATURE_STATUS_ACTIVE) {
             int binX = prev_corners[i].x / binWidth;
             int binY = prev_corners[i].y / binHeight;
 
@@ -274,17 +274,17 @@ void FeatureTracker::init_more_points(const cv::Mat &img, std::vector<cv::Point2
     // Loop through each item in feature array, and insert new point if requested (status[i] == 2)
     int matches_idx = 0;
     for (int i = 0; i < feature_status.size(); i++) {
-        if (feature_status[i] == 2) {
+        if (feature_status[i] == FEATURE_STATUS_REQUEST) {
             if (matches_idx < points.size()) {
                 // Insert the point in both prev and current features, as to not introduce wrong flows
                 prev_corners[i] = points[matches_idx];
-                prev_status[i] = 1;
+                prev_status[i] = FEATURE_STATUS_ACTIVE;
 
                 features[i] = points[matches_idx];
 
                 matches_idx++;
             } else {
-                feature_status[i] = 0;
+                feature_status[i] = FEATURE_STATUS_INACTIVE;
             }
         }
     }

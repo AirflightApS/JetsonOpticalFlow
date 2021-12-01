@@ -5,39 +5,28 @@
 #include <iostream>
 
 #define CAMERA_ID_MAIN 0
-
-#define CAMERA_SAMPLE_WIDTH 1280
-#define CAMERA_SAMPLE_HEIGTH 720
-#define CAMERA_SAMPLE_PIXELS CAMERA_SAMPLE_WIDTH * CAMERA_SAMPLE_HEIGTH
+#define CAMERA_ORIENTATION_UP = 0
 
 class Camera
 {
 public:
 
     Camera( void );
-    bool init( int id = CAMERA_ID_MAIN, int method = cv::CAP_V4L2  );
-
-    bool read( void );
-    bool read_raw( void );
-    bool show( cv::Mat frame );
+    
+    bool init( int width, int height, int frame_rate, int orientation = CAMERA_ORIENTATION_UP );
     void stop( void );
-
-    int height;
-    int width;
-
-    cv::Mat frame;
-    cv::Mat cameraMatrix;
-    cv::Mat distCoeffs;
+    bool read( void );
+    bool show( cv::Mat image, float scale = 1 );
+    
+    // Variables
+    int image_height;
+    int image_width;
+    cv::Mat image;
 
 private:
 
-
-    cv::VideoCapture camera;
-
-
-    const static float camera_intrinsics[];
-    const static float camera_distortion[];
-
+    // Opencv VideoCapture object
+    cv::VideoCapture capture;
 
 };
 

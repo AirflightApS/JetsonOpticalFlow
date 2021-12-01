@@ -1,3 +1,10 @@
+/**
+ * feature_tracker.cpp
+ *
+ * Created on: December 1, 2021
+ * Author: SolidGeek
+ */
+
 #include <opencv2/opencv.hpp>
 #include <stdint.h>
 #include "feature_tracker.h"
@@ -17,34 +24,27 @@ public:
     /**
      * @brief Initialize the Optical flow class (should be called at startup)
      * 
-     * @param f_length_x    Focal length of camera in x-axis
-     * @param f_length_y    Focal length of camera in y-axis
+     * @param f_x           Focal length of camera in x-axis
+     * @param f_y           Focal length of camera in y-axis
      * @param ouput_rate    Desired output rate
      * @param img_width     Width of image 
      * @param img_height    Height of image
      * @param num_feat      Desired number of features
      * @param conf_multi    Desired confidense interval for outlier rejection
      */
-    void init( float f_length_x, float f_length_y, int ouput_rate, int img_width, int img_height, int num_feat, float conf_multi = DEFAULT_CONFIDENCE_MULTIPLIER );
+    void init( int img_width, int img_height, float f_x, float f_y, int output_rate, int num_feat, float conf_multi = DEFAULT_CONFIDENCE_MULTIPLIER );
 
     /**
      * @brief 
      * 
-     * @param img_current   
-     * @param img_time_us 
-     * @param dt_us 
-     * @param flow_x 
-     * @param flow_y 
-     * @return int 
+     * @param img_current   Data of the newest image
+     * @param img_time_us   Timestamp of picture capture
+     * @param dt_us         Delta time since last picture
+     * @param flow_x        Flow in x-dir
+     * @param flow_y        Flow in y-dir
+     * @return int          Computed flow quality
      */
-    int compute_flow( uint8_t *img_current, const uint32_t img_time_us, int &dt_us, float &flow_x, float &flow_y );
-
-
-    inline void set_image_width(int value) { image_width = value; };
-	inline void set_image_height(int value) { image_height = value; };
-	inline void set_focal_lengt_x(float value) { focal_length_x = value; };
-	inline void set_focal_lengt_y(float value) { focal_length_y = value; };
-    inline void set_output_rate( int value ) { output_rate = value; };
+    int compute_flow( cv::Mat img_current, const uint32_t img_time_us, float &flow_x, float &flow_y, int &dt_us );
 
 private:
 
@@ -55,14 +55,13 @@ private:
 	float focal_length_y;
 	int output_rate;
 
-
     // Params for feature tracking
     FeatureTracker * tracker;
     
 	int num_features;
 	float confidence_multiplier;
-    std::vector<int> status;
-    std::vector<cv::Point2f> features_current, features_previous;
-
+    std::vector<int> status_vector; // Vector of features status
+    std::vector<cv::Point2f> features_current; // Newest 
+     std::vector<cv::Point2f> features_previous;
 };
 

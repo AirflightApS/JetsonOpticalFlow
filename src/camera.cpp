@@ -1,8 +1,5 @@
 #include "camera.h"
 
-const float Camera::camera_intrinsics[] = {962.7528696413754, 0, 609.7040640573265, 0, 962.9985208456596, 406.4304323047639, 0, 0, 1};
-const float Camera::camera_distortion[] = {-0.3568698261604957, 0.186675202042404, -0.0003407870567855935, -0.0001591138431624921, -0.04288025847293331};
-
 
 std::string gstreamer_pipeline (int capture_width, int capture_height, int display_width, int display_height, int framerate, int flip_method) {
     return "nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int)" + std::to_string(capture_width) + ", height=(int)" +
@@ -11,20 +8,11 @@ std::string gstreamer_pipeline (int capture_width, int capture_height, int displ
            std::to_string(display_height) + ", format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink drop=true";
 }
 
-Camera::Camera( void ){
+Camera::Camera( void ){}
 
-    cameraMatrix = cv::Mat( cv::Size(3,3), CV_32F, (void*)camera_intrinsics );
-    distCoeffs = cv::Mat(1,5, CV_32F, (void*)camera_distortion );
-
-}
-
-bool Camera::init( int id, int method  )
+bool Camera::init( int width, int height, int frame_rate, int orientation )
 {
-
-    std::string pipeline = gstreamer_pipeline(
-        CAMERA_SAMPLE_WIDTH,CAMERA_SAMPLE_HEIGTH,
-        CAMERA_SAMPLE_WIDTH,CAMERA_SAMPLE_HEIGTH,
-        60, 0);
+    std::string pipeline = gstreamer_pipeline( width, height, width, height, frame_rate, orientation);
 
     camera.open( pipeline, cv::CAP_GSTREAMER );
 
@@ -32,7 +20,6 @@ bool Camera::init( int id, int method  )
         printf("Camera ready.");
 
         return true;
-
     }
 
     return false;
@@ -40,39 +27,44 @@ bool Camera::init( int id, int method  )
 
 
 
-bool Camera::read()
+bool Camera::read( void )
 {
     // Allocate Mat for processing the image.
     cv::Mat raw;
 
     // Read the camera into the raw variable
-    camera.read( this->frame );
+    capture.read( raw );
 
-    if( !raw.empty() ){
+    if( !raw.empty() )
+        return true;
 
-        //cv::undistort( temp, undistored, cameraMatrix, distCoeffs );
-        // Scale down the video by a factor of 2
-        cv::resize(raw, this->frame, cv::Size(CAMERA_SAMPLE_WIDTH, CAMERA_SAMPLE_HEIGTH) );
-    }
+    return false;
 }
 
-bool Camera::show( cv::Mat data ){
+bool Camera::show( cv::Mat data, float scale ){
 
     static int frame_number = 0;
+    cv::Mat temp = cv::Mat(image_height, image_width, CV_8UC1);
     char buffer[20];
-    cv::Mat temp;
 
-    cv::resize(data, temp, cv::Size(CAMERA_SAMPLE_WIDTH/2, CAMERA_SAMPLE_HEIGTH/2) );
+    if( scale != 1 )
+        cv::resize( data, temp, cv::Size( image_width/scale, image_height/scale ) );
+    else
+        temp = data;
 
+    // Show image using opencv image container
     cv::imshow("Camera", temp );
 
+    // Listen for any key-presses
     int key = cv::waitKey(10);
 
+    // Taking a snapshot and saving it to the device
     if(key == 99){  // 'c' for capture
         sprintf(buffer, "images/frame-%d.jpg", frame_number);
         cv::imwrite( buffer, data );
         frame_number++;
     }
+    // Return false, to exit application
     else if (key == 27) // 'esc' to end
         return false;
 

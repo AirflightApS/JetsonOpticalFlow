@@ -22,6 +22,11 @@
 #include <vector>
 #include <iostream>
 
+
+#define FEATURE_STATUS_INACTIVE 0 
+#define FEATURE_STATUS_ACTIVE 1
+#define FEATURE_STATUS_REQUEST 2
+
 class FeatureTracker
 {
 
