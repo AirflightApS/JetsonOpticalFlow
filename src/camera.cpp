@@ -1,8 +1,8 @@
 #include "camera.h"
 
 
-// aelock: lock auto exposure
-// awblock: lock auto white balance
+// aelock: lock auto exposure - we want auto exposure, in low light conditions
+// awblock: lock auto white balance - we dont want auto white balance as it changes the light intensity between frames
 
 std::string gstreamer_pipeline (int capture_width, int capture_height, int display_width, int display_height, int framerate, int flip_method) {
     return "nvarguscamerasrc awblock=true aelock=false ! video/x-raw(memory:NVMM), width=(int)" + std::to_string(capture_width) + ", height=(int)" +
@@ -13,13 +13,13 @@ std::string gstreamer_pipeline (int capture_width, int capture_height, int displ
 
 Camera::Camera( void ){}
 
-bool Camera::init( int width, int height, int frame_rate, int orientation )
+bool Camera::init( int width, int height, int frame_rate, int orientation, int scale )
 {
 
     image_width = width;
     image_height = height;
 
-    std::string pipeline = gstreamer_pipeline( width, height, width, height, frame_rate, orientation);
+    std::string pipeline = gstreamer_pipeline( width, height, width/scale, height/scale, frame_rate, orientation);
 
     capture.open( pipeline, cv::CAP_GSTREAMER );
 
@@ -34,16 +34,17 @@ bool Camera::init( int width, int height, int frame_rate, int orientation )
 
 
 
-bool Camera::read( uint32_t &sample_time )
+bool Camera::read( uint64_t &sample_time )
 {
     // Allocate Mat for processing the image.
     cv::Mat raw;
 
     // Read the camera into the raw variable
     capture.read( raw );
+    sample_time = micros();
 
     if( !raw.empty() ){
-        this->image = raw;
+        this->image = raw.clone();
         return true;
     }
         
@@ -60,7 +61,7 @@ bool Camera::show( cv::Mat data, int scale ){
     if( scale != 1 )
         cv::resize( data, temp, cv::Size( image_width/scale, image_height/scale ) );
     else
-        temp = data;
+        temp = data.clone();
 
     // Show image using opencv image container
     cv::imshow("Camera", temp );

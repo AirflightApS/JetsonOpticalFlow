@@ -3,6 +3,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include "timing.h"
 
 #define CAMERA_ID_MAIN 0
 #define CAMERA_ORIENTATION_UP 0
@@ -13,9 +14,9 @@ public:
 
     Camera( void );
     
-    bool init( int width, int height, int frame_rate, int orientation = CAMERA_ORIENTATION_UP );
+    bool init( int width, int height, int frame_rate, int orientation = CAMERA_ORIENTATION_UP, int scale = 1 );
     void stop( void );
-    bool read( uint32_t &sample_time );
+    bool read( uint64_t &sample_time );
     bool show( cv::Mat image, int scale = 1 );
     
     // Variables

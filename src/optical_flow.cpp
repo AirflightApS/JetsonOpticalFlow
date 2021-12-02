@@ -7,12 +7,12 @@ OpticalFlow::OpticalFlow(){
 }
 
 
-void OpticalFlow::init( int img_width, int img_height, float f_x, float f_y, int output_rate, int num_feat, float conf_multi ){
+void OpticalFlow::init( int img_width, int img_height, float f_x, float f_y, int rate, int num_feat, float conf_multi ){
 
     // Configure parameters
     focal_length_x = f_x;
     focal_length_y = f_y;
-    output_rate = output_rate;
+    output_rate = rate;
     image_width = img_width;
     image_height = img_height;
     num_features = num_feat;
@@ -22,7 +22,7 @@ void OpticalFlow::init( int img_width, int img_height, float f_x, float f_y, int
     tracker->init( status_vector, num_features );
 }
 
-int OpticalFlow::compute_flow( cv::Mat image, const uint32_t img_time_us, float &flow_x, float &flow_y, int &dt_us ){
+int OpticalFlow::compute_flow( cv::Mat image, const uint64_t img_time_us, float &flow_x, float &flow_y, int &dt_us ){
 
     // Variables
     float pixel_mean_x = 0.0, pixel_mean_y            = 0.0;
@@ -125,10 +125,10 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint32_t img_time_us, float 
 
 
 
-int OpticalFlow::rate_limit(int flow_quality, const uint32_t image_time_us, int *dt_us, float *flow_x, float *flow_y)
+int OpticalFlow::rate_limit(int flow_quality, const uint64_t image_time_us, int *dt_us, float *flow_x, float *flow_y)
 {
 
-	static uint32_t last_report = 0;
+	static uint64_t last_report = 0;
     static float sum_flow_x = 0;
     static float sum_flow_y = 0;
     static float sum_flow_quality = 0;
@@ -150,7 +150,7 @@ int OpticalFlow::rate_limit(int flow_quality, const uint32_t image_time_us, int 
 	}
 
 	// limit rate according to parameter ouput_rate
-	if ((image_time_us - last_report) > (1.0e6f / output_rate)) {
+	if ((image_time_us - last_report) >= (1.0e6f / output_rate)) {
 
 		int average_flow_quality = 0;
 

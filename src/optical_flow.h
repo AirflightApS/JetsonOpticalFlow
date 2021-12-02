@@ -32,7 +32,7 @@ public:
      * @param num_feat      Desired number of features
      * @param conf_multi    Desired confidense interval for outlier rejection
      */
-    void init( int img_width, int img_height, float f_x, float f_y, int output_rate, int num_feat, float conf_multi = DEFAULT_CONFIDENCE_MULTIPLIER );
+    void init( int img_width, int img_height, float f_x, float f_y, int rate, int num_feat, float conf_multi = DEFAULT_CONFIDENCE_MULTIPLIER );
 
     /**
      * @brief 
@@ -44,11 +44,11 @@ public:
      * @param flow_y        Flow in y-dir
      * @return int          Computed flow quality
      */
-    int compute_flow( cv::Mat img_current, const uint32_t img_time_us, float &flow_x, float &flow_y, int &dt_us );
+    int compute_flow( cv::Mat img_current, const uint64_t img_time_us, float &flow_x, float &flow_y, int &dt_us );
 
 private:
 
-    int rate_limit(int flow_quality, const uint32_t img_time_us, int *dt_us, float *flow_x, float *flow_y);
+    int rate_limit(int flow_quality, const uint64_t img_time_us, int *dt_us, float *flow_x, float *flow_y);
 
     // Configuration
 	int image_width;

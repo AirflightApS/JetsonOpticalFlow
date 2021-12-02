@@ -51,7 +51,7 @@ void FeatureTracker::track_features(const cv::Mat &img, std::vector<cv::Point2f>
     if (!prev_img.empty()) {
         if (!prev_corners.empty()) {
 
-            cv::calcOpticalFlowPyrLK(prev_img, img, prev_corners, corners, status, errors, cv::Size(21, 21), 3);
+            cv::calcOpticalFlowPyrLK(prev_img, img, prev_corners, corners, status, errors, cv::Size(9, 9), 3);
             prev_corners = corners;
 
             for (size_t i = 0; i < prev_corners.size() && i < num_features; ++i) {
@@ -207,7 +207,7 @@ void FeatureTracker::init_more_points(const cv::Mat &img, std::vector<cv::Point2
                 std::vector<cv::KeyPoint> keypoints, goodKeypointsBin;
 
                 // Detect corners in section using FAST method, and save them in keypoints.
-                cv::FAST( img.rowRange(row_from, row_to).colRange(col_from, col_to), keypoints, 12 );
+                cv::FAST( img.rowRange(row_from, row_to).colRange(col_from, col_to), keypoints, 30 );
 
                 // Sort keypoints based on their "response"
                 sort(keypoints.begin(), keypoints.end(), compare_keypoints);
