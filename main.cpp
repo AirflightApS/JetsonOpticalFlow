@@ -9,9 +9,9 @@
 #define CAMERA_WIDTH    1280    // OBS: Must be supported by camera hardware / gstreamer
 #define CAMERA_HEIGHT   720     // --||--
 #define CAMERA_RATE     60      // --||--
-#define CAMERA_FOCAL_X  500 // Focal length of camera in x direction (pixels)
-#define CAMERA_FOCAL_Y  500 // Focal length of camera in y direction (pixels)
-#define SCALE_FACTOR 4      // Reduce / scale down the image size to reduce processing time
+#define CAMERA_FOCAL_X  655 // Focal length of camera in x direction (pixels)
+#define CAMERA_FOCAL_Y  655 // Focal length of camera in y direction (pixels)
+#define SCALE_FACTOR 2      // Reduce / scale down the image size to reduce processing time
         
 #define OPTICAL_FLOW_OUTPUT_RATE 15   // Rate of transmission of optical flow
 #define OPTICAL_FLOW_FEAUTURE_NUM 100 // Rate of transmission of optical flow
@@ -85,7 +85,7 @@ int main()
                 // Write over uart
                 uart.write_chars( buf, len );
                 
-                printf("Sensor quality: %d, at %.2f Hz \n", flow_quality, 1.0e6f/dt_us );
+                printf("Sensor quality: %d, at %.2f Hz \t x: %.2f \t y: %.2f \n", flow_quality, 1.0e6f/dt_us, flow_x, flow_y );
 
             }
 
