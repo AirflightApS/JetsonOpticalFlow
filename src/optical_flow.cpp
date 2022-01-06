@@ -4,6 +4,9 @@ OpticalFlow::OpticalFlow(){
 
     // Initialize the feature tracker
     tracker = new FeatureTracker();
+
+    camera_matrix.create(3, 3);
+	camera_distortion.create(1, 5);
 }
 
 
@@ -22,6 +25,24 @@ void OpticalFlow::init( int img_width, int img_height, float f_x, float f_y, int
     tracker->init( status_vector, num_features );
 }
 
+
+void OpticalFlow::set_camera_matrix(float focal_len_x, float focal_len_y, float principal_point_x, float principal_point_y)
+{
+	camera_matrix <<    focal_len_x, 0.0f, principal_point_x,
+		                0.0f, focal_len_y, principal_point_y,
+		                0.0f, 0.0f, 1.0f;
+
+	isset_camera_matrix = true;
+}
+
+void OpticalFlow::set_camera_distortion( float p1, float p2, float k1, float k2, float k3 )
+{
+	camera_distortion <<   k1, k2, p1, p2, k3;
+
+	isset_camera_distortion = true;
+}
+
+
 int OpticalFlow::compute_flow( cv::Mat image, const uint64_t img_time_us, float &flow_x, float &flow_y, int &dt_us ){
 
     // Variables
@@ -37,6 +58,21 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint64_t img_time_us, float 
 
     // Track the current features in new frame
     tracker->track_features( image, features_current, status_vector );
+
+
+    /* if (isset_camera_matrix && isset_camera_distortion) {
+        features_temp = features_current;
+        cv::undistortPoints(features_temp, features_current, camera_matrix, camera_distortion);
+
+        // cv::undistortPoints returns normalized coordinates... -> convert
+        for (int i = 0; i < num_features; i++) {
+            features_current[i].x = features_current[i].x * camera_matrix(0, 0) +
+                        camera_matrix(0, 2);
+            features_current[i].y = features_current[i].y * camera_matrix(1, 1) +
+                        camera_matrix(1, 2);
+        }
+    } */
+
 
     if (!features_current.empty() && !features_previous.empty()) {
 
@@ -83,9 +119,10 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint64_t img_time_us, float 
 						xsum_confidense += delta_x;
 						ysum_confidense += delta_y;
 
+
                         // Visualize the flow in the frame
-                        cv::line( image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255) );
-                        cv::circle( image, cv::Point(features_current[i].x, features_current[i].y), 2, cv::Scalar(255, 255, 255), -1 );
+                        // cv::line( image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255) );
+                        // cv::circle( image, cv::Point(features_current[i].x, features_current[i].y), 2, cv::Scalar(255, 255, 255), -1 );
 
 						confidense_count++; 
 					} 
