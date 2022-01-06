@@ -9,8 +9,8 @@
 #define CAMERA_WIDTH    1280    // OBS: Must be supported by camera hardware / gstreamer
 #define CAMERA_HEIGHT   720     // --||--
 #define CAMERA_RATE     60      // --||--
-#define CAMERA_FOCAL_X  655 // Focal length of camera in x direction (pixels)
-#define CAMERA_FOCAL_Y  655 // Focal length of camera in y direction (pixels)
+#define CAMERA_FOCAL_X  482 // Focal length of camera in x direction (pixels) (655 for 77 FOV)
+#define CAMERA_FOCAL_Y  482 // Focal length of camera in y direction (pixels) (655 for 77 FOV)
 #define SCALE_FACTOR 2      // Reduce / scale down the image size to reduce processing time
         
 #define OPTICAL_FLOW_OUTPUT_RATE 15   // Rate of transmission of optical flow
@@ -37,7 +37,7 @@ bool active = true;
 
 int main()
 {
-    uart.setup( SERIAL_TYPE_THS, B115200 );
+    uart.setup( SERIAL_TYPE_THS, B921600 );
 
     // Initialize camera class
     // Use gstreamer to scale the image by factor: SCALE_FACTOR
@@ -47,6 +47,8 @@ int main()
     // Initialize optical flow class
     flow.init( SCALE_WIDTH, SCALE_HEIGHT, CAMERA_FOCAL_X, CAMERA_FOCAL_Y, OPTICAL_FLOW_OUTPUT_RATE, OPTICAL_FLOW_FEAUTURE_NUM );
 
+    flow.set_camera_matrix(482.7226261456642, 482.8442247062027, 306.9246177204554, 193.5969854517843);
+    flow.set_camera_distortion(-0.3620682687396403, 0.2053769127028948, 0.001557520483320359, 0.0006560566429768528, -0.20991108218982449);
 
     while(active){
         // Read newest image from camera
@@ -68,8 +70,8 @@ int main()
                 mavlink_optical_flow_rad_t flow_msg;
                 flow_msg.time_usec = img_time_us;
                 flow_msg.integration_time_us = dt_us;
-                flow_msg.integrated_x = -flow_y; 
-                flow_msg.integrated_y = flow_x; 
+                flow_msg.integrated_x = flow_x; 
+                flow_msg.integrated_y = flow_y; 
                 flow_msg.quality = flow_quality;
                 flow_msg.distance = -1.0; // No distance sensor (use onboard) 
 
