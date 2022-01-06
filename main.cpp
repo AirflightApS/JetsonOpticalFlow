@@ -7,19 +7,19 @@
 #include "serial.h"
 #include "timing.h"
 
-#define CAMERA_WIDTH    1280    // OBS: Must be supported by camera hardware / gstreamer
-#define CAMERA_HEIGHT   720     // --||--
-#define CAMERA_RATE     60      // --||--
+#define CAMERA_WIDTH    1920    // OBS: Must be supported by camera hardware / gstreamer
+#define CAMERA_HEIGHT   1080     // --||--
+#define CAMERA_RATE     30      // --||--
 #define CAMERA_FOCAL_X  482 // Focal length of camera in x direction (pixels) (655 for 77 FOV)
 #define CAMERA_FOCAL_Y  482 // Focal length of camera in y direction (pixels) (655 for 77 FOV)
-#define SCALE_FACTOR 2      // Reduce / scale down the image size to reduce processing time
+#define SCALE_FACTOR 4     // Reduce / scale down the image size to reduce processing time
         
-#define OPTICAL_FLOW_OUTPUT_RATE 15   // Rate of transmission of optical flow
-#define OPTICAL_FLOW_FEAUTURE_NUM 100 // Rate of transmission of optical flow
+#define OPTICAL_FLOW_OUTPUT_RATE 20   // Rate of transmission of optical flow
+#define OPTICAL_FLOW_FEAUTURE_NUM 50 // Amount of features to track
 #define SCALE_WIDTH CAMERA_WIDTH/SCALE_FACTOR
 #define SCALE_HEIGHT CAMERA_HEIGHT/SCALE_FACTOR
 
-#define CAMERA_SAMPLE_TIME  6.667e4 // in us, resulting in a rate of 15 Hz
+#define CAMERA_SAMPLE_TIME  3.333e4 // in us, resulting in a rate of 60 Hz
 
 
 Serial uart( "/dev/ttyTHS1", SERIAL_WRITE ); 
@@ -30,8 +30,8 @@ bool app_active = true;
 
 // Allocation of space for gray-scale image
 cv::Mat frame = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 );
-volatile bool new_frame;
-volatile uint64_t frame_time_us = 0;
+bool new_frame;
+uint64_t frame_time_us = 0;
 
 
 /**
@@ -58,16 +58,11 @@ void camera_thread(){
             // Convert color space and rescale image, saving the result in "frame"
             cv::cvtColor( cam.image, frame, cv::COLOR_BGR2GRAY );
 
-            // Visualize the flow
-            if( !cam.show( frame ) ){
-                app_active = false;
-            }
-
         }
 
         last_frame_us = frame_time_us;
-
         process_time_us = micros() - process_start_us;
+
         usleep(CAMERA_SAMPLE_TIME - process_time_us);
 
     }
@@ -81,7 +76,7 @@ void camera_thread(){
  */
 void flow_thread(){
 
-    uint32_t dt_us = 0; // Variable to hold the calculated delta time between accumulated optical flow measurements
+    int dt_us = 0; // Variable to hold the calculated delta time between accumulated optical flow measurements
     float flow_x = 0;
     float flow_y = 0;
     uint8_t flow_quality = 0;  
@@ -99,6 +94,11 @@ void flow_thread(){
             
             // Compute flow from image data, and save the values in flox_x and flow_y
             int flow_quality = flow.compute_flow( frame, frame_time_us, flow_x, flow_y, dt_us );     
+
+            // Visualize the flow
+            if( !cam.show( frame ) ){
+                app_active = false;
+            }
             
             if (flow_quality >= 0) {
 
