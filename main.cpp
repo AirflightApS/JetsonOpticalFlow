@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <thread>
 #include "camera.h"
 #include "optical_flow.h"
 #include "mavlink.h"
@@ -18,67 +19,98 @@
 #define SCALE_WIDTH CAMERA_WIDTH/SCALE_FACTOR
 #define SCALE_HEIGHT CAMERA_HEIGHT/SCALE_FACTOR
 
+#define CAMERA_SAMPLE_TIME  6.667e4 // in us, resulting in a rate of 15 Hz
+
 
 Serial uart( "/dev/ttyTHS1", SERIAL_WRITE ); 
 Camera cam;         // Camera object
 OpticalFlow flow;   // OpticalFlow object
 
+bool app_active = true;
+
 // Allocation of space for gray-scale image
-cv::Mat gray = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 );
-
-// Variables to hold data from optical flow and camera
-float flow_x = 0.0;
-float flow_y = 0.0;
-int dt_us = 0;
-uint64_t img_time_us = 0;
-
-bool active = true;
+cv::Mat frame = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 );
+volatile bool new_frame;
+volatile uint64_t frame_time_us = 0;
 
 
-int main()
-{
-    uart.setup( SERIAL_TYPE_THS, B921600 );
+/**
+ * @brief Samples camera at a constant frequency
+ */
+void camera_thread(){
 
-    // Initialize camera class
-    // Use gstreamer to scale the image by factor: SCALE_FACTOR
-    if( !cam.init( CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE, 0, SCALE_FACTOR ) )
-        return -1;
+    uint64_t last_frame_us = 0;
+    uint64_t process_start_us = 0;
+    uint32_t process_time_us = 0;
+    
+    // Initialize camera class and scale the image by factor: SCALE_FACTOR to increase sample time
+    cam.init( CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE, 0, SCALE_FACTOR );
+
+    while( app_active ){
+
+        // Time the processing time, to get a consistent frame frequency
+        process_start_us = micros();
+
+        // Read newest frame from camera
+        if( cam.read( frame_time_us ) ){
+
+            new_frame = true;
+            // Convert color space and rescale image, saving the result in "frame"
+            cv::cvtColor( cam.image, frame, cv::COLOR_BGR2GRAY );
+
+            // Visualize the flow
+            if( !cam.show( frame ) ){
+                app_active = false;
+            }
+
+        }
+
+        last_frame_us = frame_time_us;
+
+        process_time_us = micros() - process_start_us;
+        usleep(CAMERA_SAMPLE_TIME - process_time_us);
+
+    }
+    
+    // Stop the camera feed
+    cam.stop();
+}
+
+/**
+ * @brief Computes the optical flow
+ */
+void flow_thread(){
+
+    uint32_t dt_us = 0; // Variable to hold the calculated delta time between accumulated optical flow measurements
+    float flow_x = 0;
+    float flow_y = 0;
+    uint8_t flow_quality = 0;  
+
+    mavlink_message_t message; // mavlink message header
+    mavlink_optical_flow_rad_t flow_msg; // mavlink opticalflow package
+    uint8_t buf[300]; // Buffer to hold outgoing mavlink package
 
     // Initialize optical flow class
     flow.init( SCALE_WIDTH, SCALE_HEIGHT, CAMERA_FOCAL_X, CAMERA_FOCAL_Y, OPTICAL_FLOW_OUTPUT_RATE, OPTICAL_FLOW_FEAUTURE_NUM );
 
-    flow.set_camera_matrix(482.7226261456642, 482.8442247062027, 306.9246177204554, 193.5969854517843);
-    flow.set_camera_distortion(-0.3620682687396403, 0.2053769127028948, 0.001557520483320359, 0.0006560566429768528, -0.20991108218982449);
+    while( app_active ){
 
-    while(active){
-        // Read newest image from camera
-        if( cam.read( img_time_us ) ){
-
-            // Convert color space and rescale image
-            cv::cvtColor( cam.image , gray, cv::COLOR_BGR2GRAY);
-
-            // Compute flow from image data, and save the values in flox_x and flow_y
-            int flow_quality = flow.compute_flow( gray, img_time_us, flow_x, flow_y, dt_us );
+        if( new_frame ){
             
-           
+            // Compute flow from image data, and save the values in flox_x and flow_y
+            int flow_quality = flow.compute_flow( frame, frame_time_us, flow_x, flow_y, dt_us );     
+            
             if (flow_quality >= 0) {
 
-                // Buffer to hold outgoing mavlink package
-                uint8_t buf[300];
-
                 // Prepare optical flow mavlink package
-                mavlink_optical_flow_rad_t flow_msg;
-                flow_msg.time_usec = img_time_us;
+                flow_msg.time_usec = frame_time_us;
                 flow_msg.integration_time_us = dt_us;
                 flow_msg.integrated_x = flow_x; 
                 flow_msg.integrated_y = flow_y; 
                 flow_msg.quality = flow_quality;
                 flow_msg.distance = -1.0; // No distance sensor (use onboard) 
 
-                // Prepare mavlink message header
-                mavlink_message_t message;
-
-                // Fill the message, with the optical flow package
+                // Fill the mavlink message, with the optical flow package
                 mavlink_msg_optical_flow_rad_encode(1, MAV_COMP_ID_PERIPHERAL, &message, &flow_msg );
 
                 // Translate message to buffer
@@ -91,15 +123,30 @@ int main()
 
             }
 
-            // Visualize the flow
-            if( !cam.show( gray ) ){
-                active = false;
-            }
-           
-        }
-    }
+            new_frame = false; // Frame has been used, await new frame
 
-    cam.stop();
+        }
+
+        // Sleep for 1 ms
+        usleep(1e3);
+
+    }
+}
+
+
+int main()
+{
+
+    // Prepare UART port
+    uart.setup( SERIAL_TYPE_THS, B921600 );
+
+    // Prepare multi-threading
+    std::thread t1( camera_thread );
+    std::thread t2( flow_thread );
+
+    // Start multi-threading
+    t1.join();
+    t2.join();
 
     return 0;
 }
