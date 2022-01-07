@@ -5,8 +5,10 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/local/include/opencv4",
+                "/usr/include/",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/external/mavlink/c_library_v2/common"
+                "${workspaceFolder}/external/mavlink/c_library_v2/common",
+                "${workspaceFolder}/external/libi2c"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -6,6 +6,7 @@
 #include "mavlink.h"
 #include "serial.h"
 #include "timing.h"
+#include "i2c/i2c.h"
 
 #define CAMERA_WIDTH    1920    // OBS: Must be supported by camera hardware / gstreamer
 #define CAMERA_HEIGHT   1080     // --||--
@@ -69,6 +70,69 @@ void camera_thread(){
     
     // Stop the camera feed
     cam.stop();
+}
+
+void lidar_thread(){
+
+    int bus_id;
+
+    // Open i2c bus /dev/i2c-1 
+    if ((bus_id = i2c_open("/dev/i2c-1")) == -1) {
+        // Could not open I2C
+        printf("Could not open I2C.");
+    }else{
+
+        // Configure I2C
+        I2CDevice device;
+
+        device.bus = bus_id;	/* Bus 0 */
+        device.addr = 0x62;	/* Slave address is 0x50, 7-bit */
+        device.iaddr_bytes = 1;	/* Device internal address is 1 byte */
+        device.page_bytes = 8; /* Device are capable of 16 bytes per page */
+
+        while( app_active ){
+
+            unsigned char rxbuf[2];
+            unsigned char txbuf[1];
+
+            // Obtaining Measurements from the I2C Interface
+
+            // Request reading from Lidar
+            bool lidar_rdy = false;
+
+            tic();
+            while( !lidar_rdy ){
+                txbuf[0] = 0x04;
+                i2c_write( &device, 0x00, txbuf, sizeof(txbuf) );
+
+                i2c_read( &device, 0x01, rxbuf, 1 );
+                
+                if( rxbuf[0] & (1 << 0) == 1 ){
+                    // Measurement ready
+                    lidar_rdy = true;
+                }
+            }
+
+            // Now ready the measurement
+            i2c_read( &device, 0x0f, rxbuf, sizeof(rxbuf) );
+
+            uint16_t distance;
+            distance = rxbuf[0];
+            distance <<= 8;
+            distance |= rxbuf[1];
+            toc();
+            
+            printf("%.2f m \n", (float)distance/100.0 );
+
+            // Sleep for 100 ms
+            usleep(50e3);
+
+        }
+
+    }
+
+    i2c_close(bus_id);
+
 }
 
 /**
@@ -141,12 +205,14 @@ int main()
     uart.setup( SERIAL_TYPE_THS, B921600 );
 
     // Prepare multi-threading
-    std::thread t1( camera_thread );
-    std::thread t2( flow_thread );
+    // std::thread t1( camera_thread );
+    // std::thread t2( flow_thread );
+    std::thread t3( lidar_thread );
 
     // Start multi-threading
-    t1.join();
-    t2.join();
+    // t1.join();
+    // t2.join();
+    t3.join();
 
     return 0;
 }

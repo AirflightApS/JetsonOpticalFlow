@@ -12,17 +12,19 @@
                 "${fileDirname}/src/optical_flow.cpp",
                 "${fileDirname}/src/serial.cpp",
                 "${fileDirname}/src/timing.cpp",
+                "${fileDirname}/external/libi2c/src/i2c.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-I", "${fileDirname}/src",
                 "-I${fileDirname}/external/mavlink/c_library_v2/common",
+                "-I${fileDirname}/external/libi2c/include",
                 "-I/usr/local/include/opencv4",
                 "-I/usr/local/include", 
                 "-L/usr/local/lib/aarch64-linux-gnu",
                 "-L/usr/local/lib",
                 "-lopencv_shape", "-lopencv_stitching", "-lopencv_objdetect", "-lopencv_superres", "-lopencv_videostab", "-lopencv_calib3d",
                 "-lopencv_features2d", "-lopencv_highgui", "-lopencv_videoio", "-lopencv_imgcodecs", "-lopencv_video", "-lopencv_photo", 
-                "-lopencv_ml", "-lopencv_imgproc", "-lopencv_flann", "-lopencv_core", "-lpthread"
+                "-lopencv_ml", "-lopencv_imgproc", "-lopencv_flann", "-lopencv_core", "-lpthread", "-li2c"
             ],
             "options": {
                 "cwd": "${fileDirname}"
