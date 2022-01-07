@@ -1,3 +1,6 @@
 [submodule "external/mavlink/c_library_v2"]
 	path = external/mavlink/c_library_v2
 	url = https://github.com/mavlink/c_library_v2
+[submodule "external/libi2c"]
+	path = external/libi2c
+	url = https://github.com/amaork/libi2c
