@@ -1,6 +1,8 @@
 #include <iostream>
 #include "i2c/i2c.h"
 
+#define LIDAR_OK 0
+#define LIDAR_ERROR -1
 
 /* Configuration Constants */
 static const uint8_t LL40LS_BASEADDR              = 0x62; /* 7-bit address */
@@ -8,6 +10,7 @@ static const uint8_t LL40LS_SIG_COUNT_VAL_DEFAULT = 0x80; /* Default maximum acq
 
 /* LL40LS Registers addresses */
 static const uint8_t LL40LS_MEASURE_REG           = 0x00; /* Measure range register */
+static const uint8_t LL40LS_STATUS_REG            = 0x01; /* Measure range register */
 static const uint8_t LL40LS_MSRREG_RESET          = 0x00; /* reset to power on defaults */
 static const uint8_t LL40LS_MSRREG_ACQUIRE        = 0x04; /* Value to acquire a measurement, version specific */
 static const uint8_t LL40LS_DISTHIGH_REG          = 0x0F; /* High byte of distance register, auto increment */
@@ -42,23 +45,48 @@ class Lidar
 {
 public:
 
-	Lidar( const char* device );
+	Lidar(void);
 
-	int init();
+	int init( const char* device_str );
 
 	/**
-	 * Initialise the automatic measurement state machine and start it.
-	 *
-	 * @note This function is called at open and error time.  It might make sense
-	 *       to make it more aggressive about resetting the bus in case of errors.
+	 * @brief Read and return result of distance measurement.
+	 * 
+	 * @return uint8_t  
 	 */
-	void start();
+	uint8_t collect( void );
 
-protected:
+	/**
+	 * @brief Initiate a distance measurement by writing to register 0x00.
+	 * 
+	 * @return uint8_t  
+	 */
+	uint8_t measure( void );
 
-	int measure();
-    
-    int collect();
+	/**
+	 * @brief Read BUSY flag from device registers. Function will return 0x00 if not busy.
+	 * 
+	 * @return true 
+	 * @return false 
+	 */
+	bool is_busy( void );
+
+	void stop( void );
+
+	/**
+	 * @brief Get the distance (should only be called after a successful measurements is acquired)
+	 * 
+	 * @return uint16_t 
+	 */
+	uint16_t get_distance( void );
+
+private:
+
+	// Configure I2C
+    I2CDevice i2cport;
+	int bus_id;
+
+	uint16_t distance;
 
 	/**
 	 * Reset the sensor to power on defaults plus additional configurations.

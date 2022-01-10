@@ -6,7 +6,7 @@
 #include "mavlink.h"
 #include "serial.h"
 #include "timing.h"
-#include "i2c/i2c.h"
+#include "lidar.h"
 
 #define CAMERA_WIDTH    1920    // OBS: Must be supported by camera hardware / gstreamer
 #define CAMERA_HEIGHT   1080     // --||--
@@ -22,8 +22,11 @@
 
 #define CAMERA_SAMPLE_TIME  3.333e4 // in us, resulting in a rate of 60 Hz
 
+#define LIDAR_TIMEOUT_US 5e4 
+
 
 Serial uart( "/dev/ttyTHS1", SERIAL_WRITE ); 
+Lidar lidar;
 Camera cam;         // Camera object
 OpticalFlow flow;   // OpticalFlow object
 
@@ -33,6 +36,7 @@ bool app_active = true;
 cv::Mat frame = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 );
 bool new_frame;
 uint64_t frame_time_us = 0;
+float distance_m = 0; // Distance from LIDAR in meters
 
 
 /**
@@ -72,66 +76,63 @@ void camera_thread(){
     cam.stop();
 }
 
+
 void lidar_thread(){
 
-    int bus_id;
+    bool collect_phase = false;
+    uint64_t acquire_time_us = 0;
 
-    // Open i2c bus /dev/i2c-1 
-    if ((bus_id = i2c_open("/dev/i2c-1")) == -1) {
-        // Could not open I2C
-        printf("Could not open I2C.");
-    }else{
+    int ret = lidar.init("/dev/i2c-1");
 
-        // Configure I2C
-        I2CDevice device;
+    if( ! ret ){
+        printf("Could not initiate LIDAR I2C.");
+        app_active = false;
+    }
 
-        device.bus = bus_id;	/* Bus 0 */
-        device.addr = 0x62;	/* Slave address is 0x50, 7-bit */
-        device.iaddr_bytes = 1;	/* Device internal address is 1 byte */
-        device.page_bytes = 8; /* Device are capable of 16 bytes per page */
 
-        while( app_active ){
+    while(app_active){
 
-            unsigned char rxbuf[2];
-            unsigned char txbuf[1];
 
-            // Obtaining Measurements from the I2C Interface
+        if ( collect_phase ){
 
-            // Request reading from Lidar
-            bool lidar_rdy = false;
+            if( lidar.is_busy() ){
 
-            tic();
-            while( !lidar_rdy ){
-                txbuf[0] = 0x04;
-                i2c_write( &device, 0x00, txbuf, sizeof(txbuf) );
-
-                i2c_read( &device, 0x01, rxbuf, 1 );
-                
-                if( rxbuf[0] & (1 << 0) == 1 ){
-                    // Measurement ready
-                    lidar_rdy = true;
+                // if we've been waiting more than 100ms then send a new acquire 
+                if( micros() - acquire_time_us > LL40LS_CONVERSION_TIMEOUT * 1e3 ){
+                    printf("LIDAR timeout");
+                    collect_phase = false;
                 }
+
+            }else{
+                
+                // Measurement is ready, try to collect it
+                if( lidar.collect() == LIDAR_OK ){
+                    uint16_t distance_cm = lidar.get_distance();
+                    distance_m = (float)distance_cm/100.0; 
+                }
+                
+                // next phase is measurement
+                collect_phase = false;
             }
-
-            // Now ready the measurement
-            i2c_read( &device, 0x0f, rxbuf, sizeof(rxbuf) );
-
-            uint16_t distance;
-            distance = rxbuf[0];
-            distance <<= 8;
-            distance |= rxbuf[1];
-            toc();
-            
-            printf("%.2f m \n", (float)distance/100.0 );
-
-            // Sleep for 100 ms
-            usleep(50e3);
 
         }
 
+        if( collect_phase == false ){
+
+            if( lidar.measure() == LIDAR_OK ){
+                // remember when we sent the acquire so we can know when the acquisition has timed out
+                acquire_time_us = micros();
+                collect_phase = true;
+            }else
+                printf("LIDAR measurement error");
+
+        }
+
+        usleep(1e3);
+
     }
 
-    i2c_close(bus_id);
+    lidar.stop();
 
 }
 
@@ -172,7 +173,7 @@ void flow_thread(){
                 flow_msg.integrated_x = flow_x; 
                 flow_msg.integrated_y = flow_y; 
                 flow_msg.quality = flow_quality;
-                flow_msg.distance = -1.0; // No distance sensor (use onboard) 
+                flow_msg.distance = distance_m; // Distance measured by LIDAR
 
                 // Fill the mavlink message, with the optical flow package
                 mavlink_msg_optical_flow_rad_encode(1, MAV_COMP_ID_PERIPHERAL, &message, &flow_msg );
@@ -183,7 +184,7 @@ void flow_thread(){
                 // Write over uart
                 uart.write_chars( buf, len );
                 
-                printf("Sensor quality: %d, at %.2f Hz \t x: %.2f \t y: %.2f \n", flow_quality, 1.0e6f/dt_us, flow_x, flow_y );
+                printf("Sensor quality: %d, at %.2f Hz \t vx: %.2f \t vy: %.2f \t distance: %.2f \n", flow_quality, 1.0e6f/dt_us, flow_x, flow_y, distance_m );
 
             }
 
@@ -205,13 +206,13 @@ int main()
     uart.setup( SERIAL_TYPE_THS, B921600 );
 
     // Prepare multi-threading
-    // std::thread t1( camera_thread );
-    // std::thread t2( flow_thread );
+    std::thread t1( camera_thread );
+    std::thread t2( flow_thread );
     std::thread t3( lidar_thread );
 
     // Start multi-threading
-    // t1.join();
-    // t2.join();
+    t1.join();
+    t2.join();
     t3.join();
 
     return 0;

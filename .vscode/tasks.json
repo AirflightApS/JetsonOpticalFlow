@@ -12,6 +12,7 @@
                 "${fileDirname}/src/optical_flow.cpp",
                 "${fileDirname}/src/serial.cpp",
                 "${fileDirname}/src/timing.cpp",
+                "${fileDirname}/src/lidar.cpp",
                 "${fileDirname}/external/libi2c/src/i2c.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
