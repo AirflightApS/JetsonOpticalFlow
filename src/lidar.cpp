@@ -64,12 +64,27 @@ uint8_t Lidar::collect( void ){
     // Shift high byte and add to low byte
     distance = (data[0] << 8) | data[1];
 
+
+    // Read sensor quality
+	int ret = i2c_read( &i2cport, LL40LS_SIGNAL_STRENGTH_REG, data, 1);
+    
+    if( !ret )
+        return LIDAR_ERROR;
+    
+    uint8_t raw_signal = data[0];
+    signal_quality = 100 * std::max(raw_signal - LL40LS_SIGNAL_STRENGTH_MIN_V3HP, 0) / (LL40LS_SIGNAL_STRENGTH_MAX_V3HP - LL40LS_SIGNAL_STRENGTH_MIN_V3HP);
+
+
     return LIDAR_OK;
 
 }
 
 uint16_t Lidar::get_distance( void ){
     return distance;
+}
+
+uint8_t Lidar::get_quality( void ){
+    return signal_quality;
 }
 
 void Lidar::stop(){

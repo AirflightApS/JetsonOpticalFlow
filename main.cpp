@@ -11,16 +11,16 @@
 #define CAMERA_WIDTH    1920    // OBS: Must be supported by camera hardware / gstreamer
 #define CAMERA_HEIGHT   1080     // --||--
 #define CAMERA_RATE     30      // --||--
-#define CAMERA_FOCAL_X  482 // Focal length of camera in x direction (pixels) (655 for 77 FOV)
-#define CAMERA_FOCAL_Y  482 // Focal length of camera in y direction (pixels) (655 for 77 FOV)
+#define CAMERA_FOCAL_X  654 // Focal length of camera in x direction (pixels) (655 for 77 FOV)
+#define CAMERA_FOCAL_Y  654 // Focal length of camera in y direction (pixels) (655 for 77 FOV)
 #define SCALE_FACTOR 4     // Reduce / scale down the image size to reduce processing time
         
-#define OPTICAL_FLOW_OUTPUT_RATE 20   // Rate of transmission of optical flow
-#define OPTICAL_FLOW_FEAUTURE_NUM 50 // Amount of features to track
+#define OPTICAL_FLOW_OUTPUT_RATE 15   // Rate of transmission of optical flow
+#define OPTICAL_FLOW_FEAUTURE_NUM 200 // Amount of features to track
 #define SCALE_WIDTH CAMERA_WIDTH/SCALE_FACTOR
 #define SCALE_HEIGHT CAMERA_HEIGHT/SCALE_FACTOR
 
-#define CAMERA_SAMPLE_TIME  3.333e4 // in us, resulting in a rate of 60 Hz
+#define CAMERA_SAMPLE_TIME  3.333e4 // in us, resulting in a rate of 30 Hz
 
 #define LIDAR_TIMEOUT_US 5e4 
 
@@ -49,7 +49,7 @@ void camera_thread(){
     uint32_t process_time_us = 0;
     
     // Initialize camera class and scale the image by factor: SCALE_FACTOR to increase sample time
-    cam.init( CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE, 0, SCALE_FACTOR );
+    cam.init( CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE, 2, SCALE_FACTOR );
 
     while( app_active ){
 
@@ -79,6 +79,10 @@ void camera_thread(){
 
 void lidar_thread(){
 
+    mavlink_message_t message; // mavlink message header
+    mavlink_distance_sensor_t distance_msg; // mavlink opticalflow package
+    uint8_t buf[300]; // Buffer to hold outgoing mavlink package
+
     bool collect_phase = false;
     uint64_t acquire_time_us = 0;
 
@@ -107,8 +111,30 @@ void lidar_thread(){
                 
                 // Measurement is ready, try to collect it
                 if( lidar.collect() == LIDAR_OK ){
+
                     uint16_t distance_cm = lidar.get_distance();
-                    distance_m = (float)distance_cm/100.0; 
+                    distance_m = (float)distance_cm/100.0;
+
+                    distance_msg.time_boot_ms = micros();
+                    distance_msg.min_distance = LL40LS_MIN_DISTANCE;
+                    distance_msg.max_distance = LL40LS_MAX_DISTANCE;
+                    distance_msg.current_distance = distance_cm;
+                    distance_msg.signal_quality = lidar.get_quality();
+                    distance_msg.orientation = 	MAV_SENSOR_ROTATION_PITCH_270;
+                    distance_msg.covariance = UINT8_MAX; // Unknown
+                    distance_msg.vertical_fov = LL40LS_FOV;
+                    distance_msg.horizontal_fov = LL40LS_FOV;
+                    distance_msg.id = LL40LS_BASEADDR; // Maybe I2C address can be used as ID??
+
+                     // Fill the mavlink message, with the optical flow package
+                    mavlink_msg_distance_sensor_encode(1, MAV_COMP_ID_PERIPHERAL, &message, &distance_msg );
+
+                    // Translate message to buffer
+                    unsigned len = mavlink_msg_to_send_buffer( buf, &message );
+
+                    // Write over uart
+                    uart.write_chars( buf, len );
+
                 }
                 
                 // next phase is measurement
@@ -163,7 +189,7 @@ void flow_thread(){
             // Visualize the flow
             if( !cam.show( frame ) ){
                 app_active = false;
-            }
+            } 
             
             if (flow_quality >= 0) {
 

@@ -7,6 +7,7 @@
 
 #define CAMERA_ID_MAIN 0
 #define CAMERA_ORIENTATION_UP 0
+#define CAMERA_ORIENTATION_LEFT 1
 
 class Camera
 {
@@ -14,7 +15,7 @@ public:
 
     Camera( void );
     
-    bool init( int width, int height, int frame_rate, int orientation = CAMERA_ORIENTATION_UP, int scale = 1 );
+    bool init( int width, int height, int frame_rate, int orientation = CAMERA_ORIENTATION_LEFT, int scale = 1 );
     void stop( void );
     bool read( uint64_t &sample_time );
     bool show( cv::Mat image, int scale = 1 );

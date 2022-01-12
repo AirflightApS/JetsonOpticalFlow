@@ -121,8 +121,8 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint64_t img_time_us, float 
 
 
                         // Visualize the flow in the frame
-                        // cv::line( image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255) );
-                        // cv::circle( image, cv::Point(features_current[i].x, features_current[i].y), 2, cv::Scalar(255, 255, 255), -1 );
+                        cv::line( image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255) );
+                        cv::circle( image, cv::Point(features_current[i].x, features_current[i].y), 2, cv::Scalar(255, 255, 255), -1 );
 
 						confidense_count++; 
 					} 

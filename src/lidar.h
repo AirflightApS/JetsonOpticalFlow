@@ -32,8 +32,9 @@ static const int LL40LS_SIGNAL_STRENGTH_LOW       = 24;  /* Minimum signal stren
 static const int LL40LS_PEAK_STRENGTH_LOW         = 135; /* Minimum peak strength for accepting a measurement */
 static const int LL40LS_PEAK_STRENGTH_HIGH        = 234; /* Max peak strength raw value */
 
-static const float LL40LS_MIN_DISTANCE = 0.05f;
-static const float LL40LS_MAX_DISTANCE = 35.00f;
+static const int LL40LS_MIN_DISTANCE = 5; // cm
+static const int LL40LS_MAX_DISTANCE = 3500; // cm
+static const float LL40LS_FOV = 0.008; // Divergence 8 mRadian
 
 // Normal conversion wait time.
 static const uint32_t LL40LS_CONVERSION_INTERVAL = 50; // ms
@@ -80,6 +81,8 @@ public:
 	 */
 	uint16_t get_distance( void );
 
+	uint8_t get_quality( void ); 
+
 private:
 
 	// Configure I2C
@@ -87,6 +90,7 @@ private:
 	int bus_id;
 
 	uint16_t distance;
+	uint8_t signal_quality;
 
 	/**
 	 * Reset the sensor to power on defaults plus additional configurations.
