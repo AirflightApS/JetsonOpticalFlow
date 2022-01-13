@@ -32,7 +32,7 @@ static const int LL40LS_SIGNAL_STRENGTH_LOW       = 24;  /* Minimum signal stren
 static const int LL40LS_PEAK_STRENGTH_LOW         = 135; /* Minimum peak strength for accepting a measurement */
 static const int LL40LS_PEAK_STRENGTH_HIGH        = 234; /* Max peak strength raw value */
 
-static const int LL40LS_MIN_DISTANCE = 5; // cm
+static const int LL40LS_MIN_DISTANCE = 10; // cm
 static const int LL40LS_MAX_DISTANCE = 3500; // cm
 static const float LL40LS_FOV = 0.008; // Divergence 8 mRadian
 

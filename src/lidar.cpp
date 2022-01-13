@@ -66,7 +66,7 @@ uint8_t Lidar::collect( void ){
 
 
     // Read sensor quality
-	int ret = i2c_read( &i2cport, LL40LS_SIGNAL_STRENGTH_REG, data, 1);
+	ret = i2c_read( &i2cport, LL40LS_SIGNAL_STRENGTH_REG, data, 1);
     
     if( !ret )
         return LIDAR_ERROR;

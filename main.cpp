@@ -79,9 +79,7 @@ void camera_thread(){
 
 void lidar_thread(){
 
-    mavlink_message_t message; // mavlink message header
-    mavlink_distance_sensor_t distance_msg; // mavlink opticalflow package
-    uint8_t buf[300]; // Buffer to hold outgoing mavlink package
+
 
     bool collect_phase = false;
     uint64_t acquire_time_us = 0;
@@ -113,28 +111,10 @@ void lidar_thread(){
                 if( lidar.collect() == LIDAR_OK ){
 
                     uint16_t distance_cm = lidar.get_distance();
+                    uint8_t quality_percent = lidar.get_quality();
                     distance_m = (float)distance_cm/100.0;
 
-                    distance_msg.time_boot_ms = micros();
-                    distance_msg.min_distance = LL40LS_MIN_DISTANCE;
-                    distance_msg.max_distance = LL40LS_MAX_DISTANCE;
-                    distance_msg.current_distance = distance_cm;
-                    distance_msg.signal_quality = lidar.get_quality();
-                    distance_msg.orientation = 	MAV_SENSOR_ROTATION_PITCH_270;
-                    distance_msg.covariance = UINT8_MAX; // Unknown
-                    distance_msg.vertical_fov = LL40LS_FOV;
-                    distance_msg.horizontal_fov = LL40LS_FOV;
-                    distance_msg.id = LL40LS_BASEADDR; // Maybe I2C address can be used as ID??
-
-                     // Fill the mavlink message, with the optical flow package
-                    mavlink_msg_distance_sensor_encode(1, MAV_COMP_ID_PERIPHERAL, &message, &distance_msg );
-
-                    // Translate message to buffer
-                    unsigned len = mavlink_msg_to_send_buffer( buf, &message );
-
-                    // Write over uart
-                    uart.write_chars( buf, len );
-
+                    
                 }
                 
                 // next phase is measurement
@@ -176,6 +156,11 @@ void flow_thread(){
     mavlink_optical_flow_rad_t flow_msg; // mavlink opticalflow package
     uint8_t buf[300]; // Buffer to hold outgoing mavlink package
 
+
+    mavlink_message_t message2; // mavlink message header
+    mavlink_distance_sensor_t distance_msg; // mavlink opticalflow package
+
+
     // Initialize optical flow class
     flow.init( SCALE_WIDTH, SCALE_HEIGHT, CAMERA_FOCAL_X, CAMERA_FOCAL_Y, OPTICAL_FLOW_OUTPUT_RATE, OPTICAL_FLOW_FEAUTURE_NUM );
 
@@ -199,7 +184,8 @@ void flow_thread(){
                 flow_msg.integrated_x = flow_x; 
                 flow_msg.integrated_y = flow_y; 
                 flow_msg.quality = flow_quality;
-                flow_msg.distance = distance_m; // Distance measured by LIDAR
+                flow_msg.distance = -1; // Distance measured by LIDAR
+    
 
                 // Fill the mavlink message, with the optical flow package
                 mavlink_msg_optical_flow_rad_encode(1, MAV_COMP_ID_PERIPHERAL, &message, &flow_msg );
@@ -209,6 +195,32 @@ void flow_thread(){
 
                 // Write over uart
                 uart.write_chars( buf, len );
+                memset(buf, 0, sizeof(buf));
+
+
+                // Build lidar package
+
+                distance_msg.time_boot_ms = micros();
+                distance_msg.min_distance = LL40LS_MIN_DISTANCE;
+                distance_msg.max_distance = LL40LS_MAX_DISTANCE;
+                distance_msg.current_distance = lidar.get_distance();
+                distance_msg.signal_quality = lidar.get_quality();
+                distance_msg.type = MAV_DISTANCE_SENSOR_LASER;
+                distance_msg.orientation = 	MAV_SENSOR_ROTATION_PITCH_270;
+                distance_msg.covariance = UINT8_MAX; // Unknown
+                distance_msg.vertical_fov = LL40LS_FOV;
+                distance_msg.horizontal_fov = LL40LS_FOV;
+                distance_msg.id = LL40LS_BASEADDR; // Maybe I2C address can be used as ID??
+
+                    // Fill the mavlink message, with the optical flow package
+                mavlink_msg_distance_sensor_encode(1, MAV_COMP_ID_PERIPHERAL, &message2, &distance_msg );
+
+                // Translate message to buffer
+                len = mavlink_msg_to_send_buffer( buf, &message2 );
+
+                // Write over uart
+                uart.write_chars( buf, len );
+
                 
                 printf("Sensor quality: %d, at %.2f Hz \t vx: %.2f \t vy: %.2f \t distance: %.2f \n", flow_quality, 1.0e6f/dt_us, flow_x, flow_y, distance_m );
 
