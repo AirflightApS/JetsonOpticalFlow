@@ -4,7 +4,7 @@
 #include "camera.h"
 #include "optical_flow.h"
 #include "mavlink.h"
-#include "serial.h"
+// #include "serial.h"
 #include "timing.h"
 
 #define CAMERA_WIDTH    1920    // OBS: Must be supported by camera hardware / gstreamer
@@ -21,7 +21,7 @@
 
 #define CAMERA_SAMPLE_TIME  3.333e4 // in us, resulting in a rate of 30 Hz
 
-Serial uart( "/dev/ttyTHS1", SERIAL_WRITE ); 
+// Serial uart( "/dev/ttyTHS1", SERIAL_WRITE ); 
 Camera cam;         // Camera object
 OpticalFlow flow;   // OpticalFlow object
 
@@ -120,7 +120,7 @@ void flow_thread(){
                 unsigned len = mavlink_msg_to_send_buffer( buf, &message );
 
                 // Write over uart
-                uart.write_chars( buf, len );
+                // uart.write_chars( buf, len );
 
                 printf("Sensor quality: %d, at %.2f Hz \t vx: %.2f \t vy: %.2f \n", flow_quality, 1.0e6f/dt_us, flow_out_x, flow_out_y );
 
@@ -141,7 +141,9 @@ int main()
 {
 
     // Prepare UART port
-    uart.setup( SERIAL_TYPE_THS, B921600 );
+    // uart.setup( SERIAL_TYPE_THS, B921600 );
+
+    printf("Ready");
 
     // Prepare multi-threading
     std::thread t1( camera_thread );
