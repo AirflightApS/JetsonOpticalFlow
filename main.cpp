@@ -3,18 +3,30 @@
 #include <thread>
 #include "camera.h"
 #include "optical_flow.h"
+
+/*
+  The MAVLink protocol code generator does its own alignment, so
+  alignment cast warnings can be ignored
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-align"
+
+#if defined(__GNUC__) && __GNUC__ >= 9
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
+
 #include "mavlink.h"
 // #include "serial.h"
 #include "timing.h"
 
 #define CAMERA_WIDTH    1920    // OBS: Must be supported by camera hardware / gstreamer
 #define CAMERA_HEIGHT   1080     // --||--
-#define CAMERA_RATE     30      // --||--
+#define CAMERA_RATE     60      // --||--
 #define CAMERA_FOCAL_X  654 // Focal length of camera in x direction (pixels) (655 for 77 FOV)
 #define CAMERA_FOCAL_Y  654 // Focal length of camera in y direction (pixels) (655 for 77 FOV)
 #define SCALE_FACTOR 4     // Reduce / scale down the image size to reduce processing time
         
-#define OPTICAL_FLOW_OUTPUT_RATE 15   // Rate of transmission of optical flow
+#define OPTICAL_FLOW_OUTPUT_RATE 20   // Rate of transmission of optical flow
 #define OPTICAL_FLOW_FEAUTURE_NUM 200 // Amount of features to track
 #define SCALE_WIDTH CAMERA_WIDTH/SCALE_FACTOR
 #define SCALE_HEIGHT CAMERA_HEIGHT/SCALE_FACTOR
@@ -99,9 +111,9 @@ void flow_thread(){
             float flow_out_y = flow_x;
 
             // Visualize the flow
-            if( !cam.show( frame ) ){
+            /* if( !cam.show( frame ) ){
                 app_active = false;
-            } 
+            } */
             
             if (flow_quality >= 0) {
 
@@ -122,7 +134,7 @@ void flow_thread(){
                 // Write over uart
                 // uart.write_chars( buf, len );
 
-                printf("Sensor quality: %d, at %.2f Hz \t vx: %.2f \t vy: %.2f \n", flow_quality, 1.0e6f/dt_us, flow_out_x, flow_out_y );
+                printf("Sensor quality: %d \t Frequency: %.2f Hz \t vx: %.2f \t vy: %.2f \n", flow_quality, 1.0e6f/dt_us, flow_out_x, flow_out_y );
 
             }
 

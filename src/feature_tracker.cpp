@@ -207,7 +207,7 @@ void FeatureTracker::init_more_points(const cv::Mat &img, std::vector<cv::Point2
                 std::vector<cv::KeyPoint> keypoints, goodKeypointsBin;
 
                 // Detect corners in section using FAST method, and save them in keypoints.
-                cv::FAST( img.rowRange(row_from, row_to).colRange(col_from, col_to), keypoints, 30 );
+                cv::FAST( img.rowRange(row_from, row_to).colRange(col_from, col_to), keypoints, 40 );
 
                 // Sort keypoints based on their "response"
                 sort(keypoints.begin(), keypoints.end(), compare_keypoints);

@@ -49,7 +49,8 @@ bool Camera::read( uint64_t &sample_time )
     sample_time = micros();
 
     if( !raw.empty() ){
-
+        
+        // Crop image to make image square. Descreases processing time, and losing very little information
         cv::Rect region(80, 0, 560, 480);
         crop = raw(region);
 
