@@ -13,7 +13,10 @@ bool compare_keypoints(const cv::KeyPoint &first, const cv::KeyPoint &second) {
 
 FeatureTracker::FeatureTracker( void ){}
 
-void FeatureTracker::init( std::vector<int> &feature_status, int number_of_features ){
+void FeatureTracker::init( std::vector<int> &feature_status, int number_of_features, int threshold ){
+
+    this->threshold = threshold;
+
 
     if (feature_status.empty()) {
 		feature_status.resize( number_of_features, FEATURE_STATUS_REQUEST );
@@ -207,7 +210,7 @@ void FeatureTracker::init_more_points(const cv::Mat &img, std::vector<cv::Point2
                 std::vector<cv::KeyPoint> keypoints, goodKeypointsBin;
 
                 // Detect corners in section using FAST method, and save them in keypoints.
-                cv::FAST( img.rowRange(row_from, row_to).colRange(col_from, col_to), keypoints, 40 );
+                cv::FAST( img.rowRange(row_from, row_to).colRange(col_from, col_to), keypoints, this->threshold );
 
                 // Sort keypoints based on their "response"
                 sort(keypoints.begin(), keypoints.end(), compare_keypoints);

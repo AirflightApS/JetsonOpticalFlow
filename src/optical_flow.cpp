@@ -22,7 +22,8 @@ void OpticalFlow::init( int img_width, int img_height, float f_x, float f_y, int
     confidence_multiplier = conf_multi;
 
     // Initialize the tracker with number of desired features
-    tracker->init( status_vector, num_features );
+    // 3td parameter is threshold for FAST algorithm. Lower value = more noisy features
+    tracker->init( status_vector, num_features, 10 );
 }
 
 
@@ -120,9 +121,9 @@ int OpticalFlow::compute_flow( cv::Mat image, const uint64_t img_time_us, float 
 
 
                         // Visualize the flow in the frame
-                        /*  cv::line( image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255) );
+                        cv::line( image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255) );
                         cv::circle( image, cv::Point(features_current[i].x, features_current[i].y), 2, cv::Scalar(255, 255, 255), -1 );
-                        */ 
+                         
                        
 						confidense_count++; 
 					} 

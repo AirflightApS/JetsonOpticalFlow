@@ -31,7 +31,7 @@
 #define SCALE_WIDTH CAMERA_WIDTH/SCALE_FACTOR
 #define SCALE_HEIGHT CAMERA_HEIGHT/SCALE_FACTOR
 
-#define CAMERA_SAMPLE_TIME  3.333e4 // in us, resulting in a rate of 30 Hz
+#define CAMERA_SAMPLE_TIME  1.667e4 // in us, resulting in a rate of 60 Hz
 
 // Serial uart( "/dev/ttyTHS1", SERIAL_WRITE ); 
 Camera cam;         // Camera object
@@ -111,9 +111,9 @@ void flow_thread(){
             float flow_out_y = flow_x;
 
             // Visualize the flow
-            /* if( !cam.show( frame ) ){
+            if( !cam.show( frame ) ){
                 app_active = false;
-            } */
+            }
             
             if (flow_quality >= 0) {
 

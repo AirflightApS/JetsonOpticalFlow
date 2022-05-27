@@ -34,7 +34,7 @@ public:
 
         FeatureTracker( void );
 
-        void init( std::vector<int> &feature_status, int number_of_features );
+        void init( std::vector<int> &feature_status, int number_of_features, int threshold = 40 );
 
         /**
          * @brief Continuously extracts points on a grid from grayscale image and tracks them over time. 
@@ -62,6 +62,8 @@ private:
 
         std::vector<int> status;
         std::vector<cv::Point2f> features_current, features_previous;
+
+        int threshold; 
 
         /**
          * @brief Counts the amount of requested features, and creates new in areas that are missing features.
