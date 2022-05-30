@@ -44,7 +44,7 @@ void Serial::setup( int type, int baud ){
             port_settings.c_oflag = 0;                                   // Enable raw input instead of canonical,
             port_settings.c_lflag = 0;  
             port_settings.c_cc[VMIN]  = 0;                               // Read at least 1 character
-            port_settings.c_cc[VTIME] = 0;                               // Wait indefinetly
+            port_settings.c_cc[VTIME] = 1;                               // Timeout after 0.1s
             break;
 
         default:

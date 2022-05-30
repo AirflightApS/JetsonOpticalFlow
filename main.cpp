@@ -26,7 +26,7 @@
 #define CAMERA_FOCAL_Y  654 // Focal length of camera in y direction (pixels) (655 for 77 FOV)
 #define SCALE_FACTOR 4     // Reduce / scale down the image size to reduce processing time
         
-#define OPTICAL_FLOW_OUTPUT_RATE 20   // Rate of transmission of optical flow
+#define OPTICAL_FLOW_OUTPUT_RATE 15  // Rate of transmission of optical flow. 0 = dont limit
 #define OPTICAL_FLOW_FEAUTURE_NUM 200 // Amount of features to track
 #define SCALE_WIDTH CAMERA_WIDTH/SCALE_FACTOR
 #define SCALE_HEIGHT CAMERA_HEIGHT/SCALE_FACTOR
@@ -107,8 +107,8 @@ void flow_thread(){
             int flow_quality = flow.compute_flow( frame, frame_time_us, flow_x, flow_y, dt_us );     
 
             // Rotate flow to match the orientation of PX4
-            float flow_out_x = -flow_y; 
-            float flow_out_y = flow_x;
+            float flow_out_x = flow_x; 
+            float flow_out_y = flow_y;
 
             // Visualize the flow
             if( !cam.show( frame ) ){
