@@ -39,8 +39,10 @@ void Serial::setup( int type, int baud ){
             break;
 
         case SERIAL_TYPE_USB:
-            port_settings.c_iflag &= ~(IXON | IXOFF | IXANY);            // Disable XON/XOFF flow control both input & output
-            port_settings.c_lflag = 0;                                   // Enable raw input instead of canonical,
+            port_settings.c_cflag |=  CS8 | CREAD | CLOCAL;              // Enable receiver,Ignore Modem Control lines
+            port_settings.c_iflag &= IGNPAR;                             // Disable XON/XOFF flow control both input & output
+            port_settings.c_oflag = 0;                                   // Enable raw input instead of canonical,
+            port_settings.c_lflag = 0;  
             port_settings.c_cc[VMIN]  = 0;                               // Read at least 1 character
             port_settings.c_cc[VTIME] = 0;                               // Wait indefinetly
             break;
