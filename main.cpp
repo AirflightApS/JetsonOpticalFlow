@@ -107,13 +107,13 @@ void flow_thread(){
             int flow_quality = flow.compute_flow( frame, frame_time_us, flow_x, flow_y, dt_us );     
 
             // Rotate flow to match the orientation of PX4
-            float flow_out_x = flow_x; 
-            float flow_out_y = flow_y;
+            float flow_out_x = -flow_y; 
+            float flow_out_y = flow_x;
 
             // Visualize the flow
-            if( !cam.show( frame ) ){
+            /* if( !cam.show( frame ) ){
                 app_active = false;
-            }
+            } */
             
             if (flow_quality >= 0) {
 
