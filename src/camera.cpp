@@ -81,7 +81,8 @@ bool Camera::show( cv::Mat data, int scale ){
 
     // Taking a snapshot and saving it to the device
     if(key == 99){  // 'c' for capture
-        sprintf(buffer, "images/frame-%d.jpg", frame_number);
+        sprintf(buffer, "images/frame-%d.bmp", frame_number);
+        printf(buffer);
         cv::imwrite( buffer, data );
         frame_number++;
     }

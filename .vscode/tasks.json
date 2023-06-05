@@ -9,6 +9,7 @@
                 "${file}",
                 "${fileDirname}/src/camera.cpp",
                 "${fileDirname}/src/feature_tracker.cpp",
+                "${fileDirname}/src/payload_tracker.cpp",
                 "${fileDirname}/src/optical_flow.cpp",
                 "${fileDirname}/src/serial.cpp",
                 "${fileDirname}/src/timing.cpp",
