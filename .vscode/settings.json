@@ -53,6 +53,14 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "typeinfo": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "bit": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "unordered_set": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "ranges": "cpp",
+        "stop_token": "cpp"
     }
 }

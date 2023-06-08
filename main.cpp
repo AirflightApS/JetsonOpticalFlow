@@ -43,14 +43,18 @@ bool app_active = true;
 
 // Allocation of space for gray-scale image
 cv::Mat frame = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 );
+cv::Mat frame_p = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 ); // frame for payload
 bool new_frame, new_frame_p;
 uint64_t frame_time_us = 0;
+
+// a global mutex to protect global variables 
+std::mutex mutex_frames; 
 
 /**
  * @brief Samples camera at a constant frequency
  */
 void camera_thread(){
-
+            
     uint64_t last_frame_us = 0;
     uint64_t process_start_us = 0;
     uint32_t process_time_us = 0;
@@ -69,7 +73,10 @@ void camera_thread(){
             new_frame = true;
             new_frame_p = true; 
             // Convert color space and rescale image, saving the result in "frame"
+            std::lock_guard<std::mutex> guard(mutex_frames);
+    
             cv::cvtColor( cam.image, frame, cv::COLOR_BGR2GRAY );
+            frame.copyTo(frame_p);
 
         }
 
@@ -88,7 +95,7 @@ void camera_thread(){
  * @brief Computes the optical flow
  */
 void flow_thread(){
-
+            
     int dt_us = 0; // Variable to hold the calculated delta time between accumulated optical flow measurements
     float flow_x = 0;
     float flow_y = 0;
@@ -105,8 +112,8 @@ void flow_thread(){
     while( app_active ){
 
         if( new_frame ){
-            
             // Compute flow from image data, and save the values in flox_x and flow_y
+            std::lock_guard<std::mutex> guard(mutex_frames);
             int flow_quality = flow.compute_flow( frame, frame_time_us, flow_x, flow_y, dt_us );     
 
             // Rotate flow to match the orientation of PX4 aND SCALE
@@ -158,11 +165,13 @@ void flow_thread(){
  * @brief Computes the optical flow
  */
 void payload_thread(){
+    payload.init(SCALE_WIDTH, SCALE_HEIGHT);
     /* Test the QR detector */
     while( app_active ){
 
         if( new_frame_p ){
-            payload.findQR( frame );
+            std::lock_guard<std::mutex> guard(mutex_frames);
+            payload.findQR( frame_p );
             new_frame_p = false; 
         }
         // Sleep for 1 ms

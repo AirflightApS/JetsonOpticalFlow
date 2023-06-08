@@ -35,12 +35,14 @@ class PayloadTracker
 public:
     PayloadTracker( void ); 
     void findQR(const cv::Mat &img);
+    void init( int img_width, int img_height, int scale = 1);
     bool show( cv::Mat data, int scale = 1);
     bool show( cv::Mat data, cv::String &windowName,int scale = 1);
 private:
     int image_height = 1080;
     int image_width = 1920;
     QRCodeDetector qrDet = QRCodeDetector();
+    int scale; 
 };
 
 #endif
