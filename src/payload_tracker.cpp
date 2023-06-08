@@ -14,28 +14,34 @@ void PayloadTracker::findQR(const cv::Mat &img)
     // std::cout << "detection_result: " << detection_result << std::endl;
 
     Mat corners, rectImage;
-    std::string data = qrDet.detectAndDecodeCurved(img, points, rectImage); // <- Throws an error on flood and fill 
-    if ( data.length() > 0)
-    {
-        std::cout << "QR detected " /*<< data*/ << std::endl;
-        /* Draw the surrounding box if found */
-        cv::Mat pointsQR; 
-        points.copyTo(pointsQR);
-        pointsQR.convertTo(pointsQR, CV_32S);
-        std::cout << "Convertion ended " /*<< data*/ << std::endl;
-        
-        cv::polylines(img, pointsQR, true, (0, 255, 0), 3);
-        std::cout << "Points " << pointsQR.rows << " " << pointsQR.cols << std::endl;
+    try{
+        std::string data = qrDet.detectAndDecodeCurved(img, points, rectImage); // <- Throws an error on flood and fill 
+        if ( data.length() > 0)
+        {
+            std::cout << "QR detected " /*<< data*/ << std::endl;
+            /* Draw the surrounding box if found */
+            cv::Mat pointsQR; 
+            points.copyTo(pointsQR);
+            pointsQR.convertTo(pointsQR, CV_32S);
+            std::cout << "Convertion ended " /*<< data*/ << std::endl;
+            
+            cv::polylines(img, pointsQR, true, (0, 255, 0), 3);
+            std::cout << "Points " << pointsQR.rows << " " << pointsQR.cols << std::endl;
 
-        show(img);
-        cv::String winname = "QRcode";
-        show(rectImage, winname);
-        // cv::line(image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255));
-        // cv::circle(image, cv::Point(features_current[i].x, features_current[i].y), 2, cv::Scalar(255, 255, 255), -1);
+            show(img);
+            cv::String winname = "QRcode";
+            show(rectImage, winname);
+            // cv::line(image, cv::Point(features_previous[i].x, features_previous[i].y), cv::Point(features_current[i].x, features_current[i].y), cv::Scalar(255, 255, 255));
+            // cv::circle(image, cv::Point(features_current[i].x, features_current[i].y), 2, cv::Scalar(255, 255, 255), -1);
+        }
+        else
+        {
+            std::cout << "QR Code not detected" << std::endl;
+        }
     }
-    else
+    catch (const std::exception& e)
     {
-        std::cout << "QR Code not detected" << std::endl;
+        
     }
 }
 

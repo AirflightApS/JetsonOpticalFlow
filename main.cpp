@@ -43,7 +43,7 @@ bool app_active = true;
 
 // Allocation of space for gray-scale image
 cv::Mat frame = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 );
-bool new_frame;
+bool new_frame, new_frame_p;
 uint64_t frame_time_us = 0;
 
 /**
@@ -67,6 +67,7 @@ void camera_thread(){
         if( cam.read( frame_time_us ) ){
 
             new_frame = true;
+            new_frame_p = true; 
             // Convert color space and rescale image, saving the result in "frame"
             cv::cvtColor( cam.image, frame, cv::COLOR_BGR2GRAY );
 
@@ -104,7 +105,6 @@ void flow_thread(){
     while( app_active ){
 
         if( new_frame ){
-            /* Test the QR detector */ 
             
             // Compute flow from image data, and save the values in flox_x and flow_y
             int flow_quality = flow.compute_flow( frame, frame_time_us, flow_x, flow_y, dt_us );     
@@ -122,7 +122,6 @@ void flow_thread(){
             /* if( !payload.show( frame ) ){
                 app_active = false;
             } */
-            payload.findQR( frame );
             if (flow_quality >= 0) {
 
                 // Prepare optical flow mavlink package
@@ -155,6 +154,21 @@ void flow_thread(){
 
     }
 }
+/**
+ * @brief Computes the optical flow
+ */
+void payload_thread(){
+    /* Test the QR detector */
+    while( app_active ){
+
+        if( new_frame_p ){
+            payload.findQR( frame );
+            new_frame_p = false; 
+        }
+        // Sleep for 1 ms
+        usleep(1e3);
+    }                
+}
 
 
 int main()
@@ -168,10 +182,11 @@ int main()
     // Prepare multi-threading
     std::thread t1( camera_thread );
     std::thread t2( flow_thread );
-
+    std::thread t3( payload_thread );
     // Start multi-threading
     t1.join();
     t2.join();
+    t3.join();
 
     return 0;
 }
