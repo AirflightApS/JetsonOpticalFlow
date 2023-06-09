@@ -19,8 +19,15 @@ void PayloadTracker::findQR(const cv::Mat &img)
     // std::cout << "detection_result: " << detection_result << std::endl;
 
     Mat corners, rectImage;
+    Mat sharpimg; 
+    Mat sharpening_kernel = (Mat_<double>(3, 3) << 0, -2, 0,
+        -2, 9, -2,
+        0, -2, 0);
+    cv::filter2D(img, sharpimg, -1, sharpening_kernel);
+    cv::String name = "Sharpie";
+    // show(sharpimg, name);
     try{
-        std::string data = qrDet.detectAndDecodeCurved(img, points, rectImage); // <- Throws an error on flood and fill 
+        std::string data = qrDet.detectAndDecodeCurved(sharpimg, points, rectImage); // <- Throws an error on flood and fill 
         if ( data.length() > 0)
         {
             
@@ -50,8 +57,9 @@ void PayloadTracker::findQR(const cv::Mat &img)
             p3y = -(img.rows - pointsQR.at<int>(0,5));
             p4x =   img.cols - pointsQR.at<int>(0,6);
             p4y = -(img.rows - pointsQR.at<int>(0,7));
-            double angle = atan2(p1y - p2y, p1x- p2x);
+            double angle = atan2(p2y - p1y, p2x- p1x);
             double angledeg = angle * 180 / 3.141592; 
+            double angl1 = angledeg;
             std::cout << "angle 1 " << angledeg << std::endl;
             angle = atan2(p3y - p4y, p3x- p4x);
             angledeg = angle * 180 / 3.141592; 
@@ -71,7 +79,7 @@ void PayloadTracker::findQR(const cv::Mat &img)
             cv::circle( img, cv::Point(p4x, -p4y), 2, cv::Scalar(255, 255, 255), -1 );
             cv::putText(img, "P4", cv::Point(p4x, -p4y), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv::LINE_AA);
 
-            cv::putText(img, std::to_string(angledeg), cv::Point((p2x + p4x)/2,(-p2y -p4y)/2), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv::LINE_AA);
+            cv::putText(img, std::to_string(angl1), cv::Point((p2x + p4x)/2,(-p2y -p4y)/2), cv::FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv::LINE_AA);
 
                         
             show(img);
