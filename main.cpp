@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "optical_flow.h"
 #include "payload_tracker.h"
+#include "yoloqr.h"
 
 /*
   The MAVLink protocol code generator does its own alignment, so
@@ -137,6 +138,7 @@ void flow_thread(){
                 flow_msg.integrated_x = flow_out_x; 
                 flow_msg.integrated_y = flow_out_y; 
                 flow_msg.quality = flow_quality;
+                
                 flow_msg.distance = -1; // distance_m; // Distance measured by LIDAR
 
                 // Fill the mavlink message, with the optical flow package

@@ -8,6 +8,7 @@
                 "/usr/include/",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/external/mavlink/c_library_v2/common"
+                "${workspaceFolder}/external/opencv-yolo-qr-detection"
                 // "${workspaceFolder}/external/libi2c"
             ],
             "defines": [],

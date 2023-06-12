@@ -4,3 +4,6 @@
 [submodule "external/libi2c"]
 	path = external/libi2c
 	url = https://github.com/amaork/libi2c
+[submodule "external/opencv-yolo-qr-detection"]
+	path = external/opencv-yolo-qr-detection
+	url = https://github.com/yushulx/opencv-yolo-qr-detection.git
