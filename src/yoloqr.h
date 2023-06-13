@@ -33,8 +33,6 @@ using namespace cv;
 using namespace std;
 using namespace cv::dnn;
 
-void test() {
-    
-}
-
+void test(cv::Mat mymat);
+void test();
 #endif

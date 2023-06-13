@@ -45,7 +45,8 @@ bool app_active = true;
 // Allocation of space for gray-scale image
 cv::Mat frame = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 );
 cv::Mat frame_p = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 ); // frame for payload
-bool new_frame, new_frame_p;
+cv::Mat frame_dnn; //  = cv::Mat( SCALE_WIDTH, SCALE_HEIGHT, CV_8UC1 ); // frame for payload
+bool new_frame, new_frame_p, new_frame_dnn;
 uint64_t frame_time_us = 0;
 
 // a global mutex to protect global variables 
@@ -73,11 +74,13 @@ void camera_thread(){
 
             new_frame = true;
             new_frame_p = true; 
+            new_frame_dnn = true; 
             // Convert color space and rescale image, saving the result in "frame"
             std::lock_guard<std::mutex> guard(mutex_frames);
     
             cv::cvtColor( cam.image, frame, cv::COLOR_BGR2GRAY );
             frame.copyTo(frame_p);
+            cam.image.copyTo(frame_dnn);
 
         }
 
@@ -181,23 +184,39 @@ void payload_thread(){
     }                
 }
 
+void dnn_thread(){
+    /* Test the QR detector */
+    while( app_active ){
+
+        if( new_frame_dnn ){
+            std::lock_guard<std::mutex> guard(mutex_frames);
+            test( frame_dnn );
+            new_frame_dnn = false; 
+        }
+        // Sleep for 1 ms
+        usleep(1e3);
+    }                
+}
+
 
 int main()
 {
 
     // Prepare UART port
     uart.setup( SERIAL_TYPE_USB, B57600 );
-
+    test();
     printf("Ready");
 
     // Prepare multi-threading
     std::thread t1( camera_thread );
     std::thread t2( flow_thread );
-    std::thread t3( payload_thread );
+    // std::thread t3( payload_thread );
+    std::thread t4( dnn_thread );
     // Start multi-threading
     t1.join();
     t2.join();
-    t3.join();
+    // t3.join();
+    t4.join();
 
     return 0;
 }
