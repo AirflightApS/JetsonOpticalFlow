@@ -35,4 +35,5 @@ using namespace cv::dnn;
 
 void test(cv::Mat mymat);
 void test();
+bool show(cv::Mat data, int scale);
 #endif

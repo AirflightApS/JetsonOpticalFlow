@@ -81,7 +81,7 @@ void camera_thread(){
             cv::cvtColor( cam.image, frame, cv::COLOR_BGR2GRAY );
             frame.copyTo(frame_p);
             cam.image.copyTo(frame_dnn);
-
+            std::cout << cam.image.size() << std::endl; 
         }
 
         last_frame_us = frame_time_us;
