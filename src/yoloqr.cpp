@@ -10,7 +10,7 @@ void test(cv::Mat mymat) {
     //cv::Mat mymat(512,512, CV_8UC3, Scalar(0,0,255));; 
     // cv::Scalar myscalar; 
     // cv::Size msize(416,416); cv::Size(416,416)
-    cv::Mat blob =  cv::dnn::blobFromImage(mymat, 1.0f/255.0f, cv::Size(416,416), cv::Scalar(), true, false);
+    cv::Mat blob =  cv::dnn::blobFromImage(mymat, 1.0f/255.0f, cv::Size(150,150), cv::Scalar(), true, false);
     // blob.reshape(blob.)
     // show(blob, 1);
     /* Insert blob to the network for inference */
@@ -26,7 +26,7 @@ void test(cv::Mat mymat) {
     std::vector<std::string> names; 
     names.resize(outLayers.size());
     // std::cout << "layer names" << std::endl;
-    for (size_t i = 0; i < outLayers.size(); i++) {
+    for (size_t i = 0; i < outLayers.size() ; i++) {
         names[i] = layer_names[outLayers[i] - 1];
         // std::cout << names[i] << std::endl;
     } 
